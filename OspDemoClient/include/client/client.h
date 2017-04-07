@@ -6,13 +6,8 @@
 
 
 /*用户操作指令*/
-#define INVALID         1
-#define CAT_OLCLT       2
-#define TRAN_SIG_INFO   3
-#define TRAN_ALL_INFO   4
-#define SEND_FILE       5
-#define SEND_INFO       6
-#define QUIT            7
+#define INVALID         (u16)(0)
+
 
 
 

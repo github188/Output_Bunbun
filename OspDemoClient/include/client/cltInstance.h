@@ -25,11 +25,21 @@ private:
     virtual void InstanceEntry(CMessage *const pMsg);
 
 private:
-    void ReqFunction(CMessage *const pMsg);
-    void AckFuction(CMessage *const pMsg);
-    void Term_Fuction(CMessage *const pMsg);
-    void Timeout_Function();
-    void Def_Fuction(CMessage *const pMsg);
-    void StartWork(CMessage *const pMsg);
-    void Printf_Function(CMessage *const pMsg);
+    u16 GetMain(u16);
+    u16 GetBran(u16);
+
+    void (CClientInstance :: *IdleEventFunction[EVENT_MAIN_MAXN][EVENT_BRAN_MAXN])(CMessage *const pMsg);
+    void (CClientInstance :: *ConnectEventFunction[EVENT_MAIN_MAXN][EVENT_BRAN_MAXN])(CMessage *const pMsg);
+    void (CClientInstance :: *ReqEventFunction[EVENT_MAIN_MAXN][EVENT_BRAN_MAXN])(CMessage *const pMsg);
+    void (CClientInstance :: *WorkEventFunction[EVENT_MAIN_MAXN][EVENT_BRAN_MAXN])(CMessage *const pMsg);
+    void (CClientInstance :: *TermEventFunction[EVENT_MAIN_MAXN][EVENT_BRAN_MAXN])(CMessage *const pMsg);
+
+    void Idle_Function(CMessage *const pMsg);
+    void Connect_Function(CMessage *const pMsg);
+    void Req_Function(CMessage *const pMsg);
+    void Work_Function(CMessage *const pMsg);
+    void Term_Function(CMessage *const pMsg);
+
+    void Idle_Req_InsConnect(CMessage *const pMsg);
+    void Idle_Ack_InsConnect(CMessage *const pMsg);
 };

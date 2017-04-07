@@ -3,84 +3,102 @@
 
 CClientInstance :: CClientInstance()
 {
-
-
+    NextState(C_STATE_IDLE);
+    IdleEventFunction[GetMain(EVENT_REQ_INSCONNECT)][GetBran(EVENT_REQ_INSCONNECT)] = &CClientInstance :: Idle_Req_InsConnect;
+    IdleEventFunction[GetMain(EVENT_ACK_INSCONNECT)][GetBran(EVENT_ACK_INSCONNECT)] = &CClientInstance :: Idle_Ack_InsConnect;
 
 }
 
 void CClientInstance :: DaemonInstanceEntry(CMessage *const  pMsg, CApp * pApp)
 {
-    log( 0, (char *)"Osp: message received in default daemon instance of app %d.\nCheck your daemon implementation, please!\n", GetAppID() );
+    log( 0, (char *)"Osp: message received in default daemon instance of app %d.\nCheck your daemon implementation, please!\n", GetAppID());
 
 }
+
+/*
+    对事件的解析 主、分支函数
+*/
+u16 CClientInstance :: GetMain(u16 wEvent)
+{
+    return (wEvent - OSP_USEREVENT_BASE) % EVENT_T;
+}
+
+u16 CClientInstance :: GetBran(u16 wEvent)
+{
+    return (wEvent - OSP_USEREVENT_BASE) / EVENT_T;
+}
+
 
 void CClientInstance :: InstanceEntry(CMessage *const pMsg)
 {
     /*得到当前消息的类型*/
-    u16 wCurEvent = pMsg->event;
+    u16 wCurState = CurState();
     
-    switch (wCurEvent)
+    switch (wCurState)
     {
-        case EVENT_Y:
-            UserInterface();
+        case C_STATE_IDLE:
+            Idle_Function(pMsg);
+            break;
+        case C_STATE_CONNECT:
+            Connect_Function(pMsg);
+            break;
+        case C_STATE_REQ:
+            Req_Function(pMsg);
+            break;
+        case C_STATE_WORK:
+            Work_Function(pMsg);
+            break;
+        case C_STATE_TERM:
+            Term_Function(pMsg);
             break;
         default:
-            Def_Fuction(pMsg);
+            
             break;
     }
     
 }
 
 /*
-*消息反馈功能
+    Idle状态对各事件处理的选择
 */
-void CClientInstance :: ReqFunction(CMessage *const pMsg)
+void CClientInstance :: Idle_Function(CMessage *const pMsg)
 {
-    u32 dwCurState = CurState();
-
-    switch (dwCurState)
-    {
-        case 1:
-            break;
-        default:
-            break;
-    }
+    u16 wCurEvent = pMsg->event;
+    u16 wCurEventMain = (wCurEvent - OSP_USEREVENT_BASE) % EVENT_T;
+    u16 wCurEventBran = (wCurEvent - OSP_USEREVENT_BASE) / EVENT_T;
+    (this->*IdleEventFunction[wCurEventMain][wCurEventBran])(pMsg);
 
 }
 
-void CClientInstance :: AckFuction(CMessage *const pMsg)
+void CClientInstance :: Idle_Req_InsConnect(CMessage *const pMsg)
 {
-
+    printf("turn into ready work status\n");
+    NextState(C_STATE_CONNECT);
 
 }
 
-void CClientInstance :: Term_Fuction(CMessage *const pMsg)
-{
-
-}
-
-void CClientInstance :: Timeout_Function()
-{
-
-}
-
-void CClientInstance :: Def_Fuction(CMessage *const pMsg)
+void CClientInstance :: Idle_Ack_InsConnect(CMessage *const pMsg)
 {
 
 
 }
 
-void CClientInstance :: StartWork(CMessage *const pMsg)
+void CClientInstance :: Connect_Function(CMessage *const pMsg)
 {
-   /* g_pMsg = (CMessage const*)malloc(sizeof(pMsg));
-    memcpy((void*)g_pMsg, pMsg, sizeof(pMsg));
-    printf("You have connected server......\n");
-    */
+
 }
 
-void CClientInstance :: Printf_Function(CMessage *const pMsg)
+void CClientInstance :: Req_Function(CMessage *const pMsg)
 {
-    printf("client's info is %s\n", pMsg->content);
-    
+
+}
+
+void CClientInstance :: Work_Function(CMessage *const pMsg)
+{
+
+}
+
+void CClientInstance :: Term_Function(CMessage *const pMsg)
+{
 
 }

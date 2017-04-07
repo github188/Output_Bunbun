@@ -25,7 +25,7 @@
 #define EVENT_N                 (u16)(0)
 
 /*
-    
+    具体事件宏   
 */
 
 #define EVENT_REQ               (u16)(1 + OSP_USEREVENT_BASE)
@@ -34,7 +34,9 @@
 #define EVENT_TIMEOUT           (u16)(4 + OSP_USEREVENT_BASE)
 
 
-#define EVENT_REQ_INS           (u16)(EVENT_T*1 + EVENT_REQ)
+#define EVENT_REQ_INSCONNECT           (u16)(EVENT_T*1 + EVENT_REQ)
+#define EVENT_ACK_INSCONNECT           (u16)(EVENT_T*1 + EVENT_ACK)
+
 
 
 /*

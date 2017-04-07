@@ -37,6 +37,6 @@ private:
     virtual void Work_Function(CMessage *const pMsg);
     virtual void Term_Function(CMessage *const pMsg);
 
-    void Idle_Req_Ins(CMessage *const pMsg);
-    void Idle_Ack_Ins(CMessage *const pMsg);
+    void Idle_Req_InsConnect(CMessage *const pMsg);
+    void Idle_Ack_InsConnect(CMessage *const pMsg);
 };

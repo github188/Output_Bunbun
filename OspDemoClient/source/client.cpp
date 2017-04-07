@@ -69,6 +69,8 @@ int main()
     if(dstnode != 0)
     {
         printf("connect server success\n");
+        rtn = OspPost(MAKEIID(CLT_APP_NO, 1), EVENT_REQ_INSCONNECT, NULL, 0, 0);
+        
     }
     else
     {
@@ -76,11 +78,13 @@ int main()
         Sleep(1000);
         exit(-1);
     } 
+    
 
     /*连接同时，需要服务器分配一个实例处理该客户端,以便后面通讯使用*/
-    rtn = OspPost(MAKEIID(SRV_APP_NO, CClientInstance :: PENDING), EVENT_REQ_INS, NULL, 0, dstnode, MAKEIID(CLT_APP_NO, 1));
+    rtn = OspPost(MAKEIID(SRV_APP_NO, CClientInstance :: PENDING), EVENT_REQ_INSCONNECT, NULL, 0, dstnode, MAKEIID(CLT_APP_NO, 1));
     if(0 == rtn)
     {
+        
         printf("请求分配成功!\n");
     }
     else
