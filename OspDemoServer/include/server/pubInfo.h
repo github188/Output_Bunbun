@@ -1,7 +1,5 @@
 #ifndef _PUBINFO_H_
 #define _PUBINFO_H_
-#endif
-
 /*
     OSP的消息类型是16字节整形，OSP用户定义的消息类型应该大于该基准值，
     该基准值之下是OSP保留消息号
@@ -25,18 +23,26 @@
 #define EVENT_N                 (u16)(0)
 
 /*
-    具体事件宏   
+    具体事件
 */
 
-#define EVENT_REQ               (u16)(1 + OSP_USEREVENT_BASE)
-#define EVENT_ACK               (u16)(2 + OSP_USEREVENT_BASE)
-#define EVENT_TERM              (u16)(3 + OSP_USEREVENT_BASE)
-#define EVENT_TIMEOUT           (u16)(4 + OSP_USEREVENT_BASE)
-
+#define EVENT_REQ               (u16)(1 + OSP_USEREVENT_BASE)           //1
+#define EVENT_ACK               (u16)(2 + OSP_USEREVENT_BASE)           //2
+#define EVENT_TERM              (u16)(3 + OSP_USEREVENT_BASE)           //3
+#define EVENT_TIMEOUT           (u16)(4 + OSP_USEREVENT_BASE)           //4
+                                                                        //5
+                                                                        //6
+                                                                        //7
 
 #define EVENT_REQ_INSCONNECT           (u16)(EVENT_T*1 + EVENT_REQ)
 #define EVENT_ACK_INSCONNECT           (u16)(EVENT_T*1 + EVENT_ACK)
+#define EVENT_TERM_INSCONNECT          (u16)(EVENT_T*1 + EVENT_TERM)
+#define EVENT_TIMEOUT_INSCONNECT       (u16)(EVENT_T*1 + EVENT_TIMEOUT)
 
+#define EVENT_REQ_CATOTHERS            (u16)(EVENT_T*1 + EVENT_REQ)
+#define EVENT_ACK_CATOTHERS            (u16)(EVENT_T*1 + EVENT_ACK)
+#define EVENT_TERM_CATOTHERS           (u16)(EVENT_T*1 + EVENT_TERM)
+#define EVENT_TIMEOUT_CATOTHERS        (u16)(EVENT_T*1 + EVENT_TIMEOUT)
 
 
 /*
@@ -119,3 +125,7 @@
     IP字串大小
 */
 #define IPSTR_MAX 50
+
+#define MAXINS 8
+
+#endif //pubInfo.h

@@ -1,10 +1,12 @@
+#ifndef _CLTINSTANCE_H_
+#define _CLTINSTANCE_H_
+
 #include "osp.h"
 #include "pubInfo.h"
 #include "client.h"
 
-#ifndef _CLTINSTANCE_H_
-#define _CLTINSTANCE_H_
-#endif
+
+
 
 /*
     基于Osp的应用必须从该CInstance基类派生一个具体的Instance类，
@@ -42,4 +44,46 @@ private:
 
     void Idle_Req_InsConnect(CMessage *const pMsg);
     void Idle_Ack_InsConnect(CMessage *const pMsg);
+    void Idle_Term_InsConnect(CMessage *const pMsg);
+    void Idle_Timeout_InsConnect(CMessage *const pMsg);
+
+    void Connect_Req_CatOthers(CMessage *const pMsg);
+    void Connect_Ack_CatOthers(CMessage *const pMsg);
+    void Connect_Term_CatOthers(CMessage *const pMsg);
+    void Connect_Timeout_CatOthers(CMessage *const pMsg);
+
+    void Connect_Req_TransInfo(CMessage *const pMsg);
+    void Connect_Ack_TransInfo(CMessage *const pMsg);
+    void Connect_Term_TransInfo(CMessage *const pMsg);
+    void Connect_Timeout_TransInfo(CMessage *const pMsg);
+
+    //void Connect_Req_TransAll(CMessage *const pMsg);
+    void Req_Req_CatOthers(CMessage *const pMsg);
+    void Req_Ack_CatOthers(CMessage *const pMsg);
+    void Req_Term_CatOthers(CMessage *const pMsg);
+    void Req_Timeout_CatOthers(CMessage *const pMsg);
+
+    void Req_Req_TransInfo(CMessage *const pMsg);
+    void Req_Ack_TransInfo(CMessage *const pMsg);
+    void Req_Term_TransInfo(CMessage *const pMsg);
+    void Req_Timeout_TransInfo(CMessage *const pMsg);
+
+    void Req_Req_SendFile(CMessage *const pMsg);
+    void Req_Ack_SendFile(CMessage *const pMsg);
+    void Req_Term_SendFile(CMessage *const pMsg);
+    void Req_Timeout_SendFile(CMessage *const pMsg);
+
+    void Req_Req_SendChar(CMessage *const pMsg);
+    void Req_Ack_SendChar(CMessage *const pMsg);
+    void Req_Term_SendChar(CMessage *const pMsg);
+    void Req_Timeout_SendChar(CMessage *const pMsg);
+
+    void Req_Req_Quit(CMessage *const pMsg);
+    void Req_Ack_Quit(CMessage *const pMsg);
+    void Req_Term_Quit(CMessage *const pMsg);
+    void Req_Timeout_Quit(CMessage *const pMsg);
+    
 };
+
+
+#endif //cltInstance.h

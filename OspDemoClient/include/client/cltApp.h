@@ -1,6 +1,6 @@
 #ifndef _CLTAPP_H_
 #define _CLTAPP_H_
-#endif
+
 
 #include "cltInstance.h"
 
@@ -14,3 +14,5 @@ class CClientApp : public zTemplate <CClientInstance, 1, CAppNoData, 0>
 
 
 };
+
+#endif //cltApp.h

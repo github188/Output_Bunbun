@@ -1,6 +1,6 @@
 #include "cltApp.h"
 
-
+struct ConnectInfo *g_pConnectInfo;
 
 void UserInterface()
 {
@@ -10,17 +10,35 @@ void UserInterface()
             3.转发消息\n\
             4.群发消息\n\
             5.发送文件\n\
-            *6.输入字符信息\n\
+            *6.发送文字信息\n\
             *7.退出\n\
             *0.清屏\n-------------------------------------\n\
 Please intput your command:\n");
-    s32 byCmd = -1;
-
-    scanf("%d", &byCmd);
-    if(7 == byCmd)
+    u16 byCmd;
+    scanf("%hd", &byCmd);
+    switch(byCmd)
     {
-        OspQuit();
+        case U_INVALID:
+            break;
+        case U_CATOTHERS:       
+            OspPost(MAKEIID(CLT_APP_NO, 1), U_CATOTHERS, 0, 0, 0, MAKEIID(CLT_APP_NO, 1), 0);
+            break;
+        case U_TRANSINFO:
+            break;
+        case U_TRANSALL:
+            break;
+        case U_SENDFILE:
+            break;
+        case U_SENDCHAR:
+            break;
+        case U_DISCONNECT:
+            break;
+        case U_CLEAR:
+            break;
+        default:
+            break;
     }
+    
 
 }
 
@@ -39,7 +57,7 @@ void UserInit()
         TelNetPort，表示telnet服务所用的端口，一般情况下请用缺省值0，这样OSP会从2500开始绑定端口，直到成功，作为telnet的端口；
 	    pchModuleName，模块名，该应用程序的名字；
     */
-
+    
 
     OspInit(false, 0, "client");         /* 初始化Osp, 在端口x启动Telnet */
     OspCreateTcpNode(0, 6683); 
@@ -52,9 +70,9 @@ void UserInit()
 
 int main()
 {
-
     s32 rtn = -1;
-
+    g_pConnectInfo = (struct ConnectInfo *)malloc(sizeof(struct ConnectInfo));
+    g_pConnectInfo->pMsg = (CMessage *)malloc(sizeof(CMessage));
     UserInit();
 
     s8 pbyAddr[IPSTR_MAX];
@@ -63,10 +81,10 @@ int main()
     scanf("%s %d", pbyAddr, &wTcpPort);
     u32 dwIpv4Addr = inet_addr(pbyAddr);
     /*连接服务器测试*/
-    s32 dstnode = OspConnectTcpNode(dwIpv4Addr, wTcpPort, 10, 3, 1, 0);
+    g_pConnectInfo->dstnode = OspConnectTcpNode(dwIpv4Addr, wTcpPort, 10, 3, 1, 0);
 
     system("cls");
-    if(dstnode != 0)
+    if( g_pConnectInfo->dstnode != 0)
     {
         printf("connect server success\n");
         rtn = OspPost(MAKEIID(CLT_APP_NO, 1), EVENT_REQ_INSCONNECT, NULL, 0, 0);
@@ -80,17 +98,7 @@ int main()
     } 
     
 
-    /*连接同时，需要服务器分配一个实例处理该客户端,以便后面通讯使用*/
-    rtn = OspPost(MAKEIID(SRV_APP_NO, CClientInstance :: PENDING), EVENT_REQ_INSCONNECT, NULL, 0, dstnode, MAKEIID(CLT_APP_NO, 1));
-    if(0 == rtn)
-    {
-        
-        printf("请求分配成功!\n");
-    }
-    else
-    {
-        printf("请求分配失败!\n");
-    }
+    
     while(1);
     return 0;
 }
