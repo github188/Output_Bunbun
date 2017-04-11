@@ -39,10 +39,10 @@
 #define EVENT_TERM_INSCONNECT          (u16)(EVENT_T*1 + EVENT_TERM)
 #define EVENT_TIMEOUT_INSCONNECT       (u16)(EVENT_T*1 + EVENT_TIMEOUT)
 
-#define EVENT_REQ_CATOTHERS            (u16)(EVENT_T*1 + EVENT_REQ)
-#define EVENT_ACK_CATOTHERS            (u16)(EVENT_T*1 + EVENT_ACK)
-#define EVENT_TERM_CATOTHERS           (u16)(EVENT_T*1 + EVENT_TERM)
-#define EVENT_TIMEOUT_CATOTHERS        (u16)(EVENT_T*1 + EVENT_TIMEOUT)
+#define EVENT_REQ_CATOTHERS            (u16)(EVENT_T*2 + EVENT_REQ)
+#define EVENT_ACK_CATOTHERS            (u16)(EVENT_T*2 + EVENT_ACK)
+#define EVENT_TERM_CATOTHERS           (u16)(EVENT_T*2 + EVENT_TERM)
+#define EVENT_TIMEOUT_CATOTHERS        (u16)(EVENT_T*2 + EVENT_TIMEOUT)
 
 
 /*
@@ -50,6 +50,25 @@
 */
 
 
+/*
+    服务器存储在线用户实例结构体声明
+*/
+typedef struct UserInfo
+{
+    CMessage *pMsg;
+    s32 dwNumber;
+    s32 dwState;
+
+}UserInfo;
+
+/*
+    在线用户信息结构体
+*/
+
+typedef struct  OnLineUser
+{
+    s8 *InsAlias;
+}OnLineUser;
 
 
 /*

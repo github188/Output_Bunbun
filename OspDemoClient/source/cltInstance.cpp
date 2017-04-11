@@ -9,6 +9,9 @@ CClientInstance :: CClientInstance()
 
     ReqEventFunction[GetMain(EVENT_ACK_CATOTHERS)][GetBran(EVENT_ACK_CATOTHERS)] = &CClientInstance :: Req_Ack_CatOthers;
 
+    WorkEventFunction[GetMain(EVENT_ACK_CATOTHERS)][GetBran(EVENT_ACK_CATOTHERS)] = &CClientInstance :: Work_Ack_CatOthers;
+    WorkEventFunction[GetMain(EVENT_TERM_CATOTHERS)][GetBran(EVENT_TERM_CATOTHERS)] = &CClientInstance :: Work_Term_CatOthers;
+
 }
 
 void CClientInstance :: DaemonInstanceEntry(CMessage *const  pMsg, CApp * pApp)
@@ -45,7 +48,7 @@ void CClientInstance :: InstanceEntry(CMessage *const pMsg)
             Connect_Function(pMsg);
             printf("进入请求状态\n");
             NextState(C_STATE_REQ);
-            SetTimer(EVENT_TIMEOUT, 1000);
+            //SetTimer(EVENT_TIMEOUT, 1000);
             break;
         case C_STATE_REQ:
             Req_Function(pMsg);
@@ -82,6 +85,7 @@ void CClientInstance :: Idle_Req_InsConnect(CMessage *const pMsg)
 
     /*连接同时，需要服务器分配一个实例处理该客户端,以便后面通讯使用*/
     s32 rtn = -1;
+    rtn = OspPost(MAKEIID(SRV_APP_NO, CClientInstance :: DAEMON), EVENT_REQ_INSCONNECT, NULL, 0, g_pConnectInfo->dstnode, MAKEIID(CLT_APP_NO, 1));
     rtn = OspPost(MAKEIID(SRV_APP_NO, CClientInstance :: PENDING), EVENT_REQ_INSCONNECT, NULL, 0, g_pConnectInfo->dstnode, MAKEIID(CLT_APP_NO, 1));
     if(0 == rtn)
     {
@@ -159,7 +163,7 @@ void CClientInstance :: Req_Ack_CatOthers(CMessage *const pMsg)
 {
     u16 wCurEvent = pMsg->event;
     printf("服务器同意查看用户请求\n");
-
+    
 }
 
 /*
@@ -167,9 +171,22 @@ void CClientInstance :: Req_Ack_CatOthers(CMessage *const pMsg)
 */
 void CClientInstance :: Work_Function(CMessage *const pMsg)
 {
-
+    u16 wCurEvent = pMsg->event;
+    u16 wCurEventMain = GetMain(wCurEvent);
+    u16 wCurEventBran = GetBran(wCurEvent);
+    (this->*WorkEventFunction[wCurEventMain][wCurEventBran])(pMsg);
 }
 
+void CClientInstance :: Work_Ack_CatOthers(CMessage *const pMsg)
+{
+    printf("用户:%s   状态:在线\n", pMsg->dstAlias);
+}
+
+void CClientInstance :: Work_Term_CatOthers(CMessage *const pMsg)
+{
+    printf("显示用户信息完毕\n");
+
+}
 /*
     终止状态下对各事件处理的选择
 */

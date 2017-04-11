@@ -6,7 +6,7 @@ void UserInterface()
 {
     printf("-------------------------------------\n\
             1.未实现\n\
-            2.查看其他在线客户\n\
+            2.查看其他用户\n\
             3.转发消息\n\
             4.群发消息\n\
             5.发送文件\n\
@@ -61,11 +61,13 @@ void UserInit()
 
     OspInit(false, 0, "client");         /* 初始化Osp, 在端口x启动Telnet */
     OspCreateTcpNode(0, 6683); 
-    rtn = clt->CreateApp("CltApp", 
+    rtn = clt->CreateApp("CltApp1", 
                         CLT_APP_NO, 
                         CLT_APP_PRI, 
                         CLT_APP_QUE_SIZE, 
                         CLT_APP_STK_SIZE);
+
+    clt->SetInstAlias(1, "Ins1", 5);
 }
 
 int main()

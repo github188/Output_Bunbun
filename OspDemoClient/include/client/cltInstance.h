@@ -83,6 +83,9 @@ private:
     void Req_Term_Quit(CMessage *const pMsg);
     void Req_Timeout_Quit(CMessage *const pMsg);
     
+    //WORK STATE
+    void Work_Ack_CatOthers(CMessage *const pMsg);
+    void Work_Term_CatOthers(CMessage *const pMsg);
 };
 
 

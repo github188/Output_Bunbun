@@ -20,13 +20,9 @@ class CServerInstance : public CInstance
 public:
     CServerInstance();
 
-
 private:
-    struct UserInfo{};
     UserInfo m_pUserInfo[MAXINS];
     s32 m_dwCurInsNum;
-
-
 private:
     virtual void DaemonInstanceEntry( CMessage *const pMsg, CApp *pApp);
     virtual void InstanceEntry(CMessage *const pMsg);

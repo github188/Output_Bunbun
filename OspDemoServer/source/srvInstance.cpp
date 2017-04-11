@@ -4,10 +4,9 @@
 
 CServerInstance :: CServerInstance()
 {
-    
+  
     NextState(S_STATE_IDLE);
     m_dwCurInsNum = 0;//起始状态，没有用户连接
-
     IdleEventFunction[GetMain(EVENT_REQ_INSCONNECT)][GetBran(EVENT_REQ_INSCONNECT)] = &CServerInstance :: Idle_Req_InsConnect;
     IdleEventFunction[GetMain(EVENT_ACK_INSCONNECT)][GetBran(EVENT_ACK_INSCONNECT)] = &CServerInstance :: Idle_Ack_InsConnect;
 
@@ -15,23 +14,37 @@ CServerInstance :: CServerInstance()
 
 }
 
+
 void CServerInstance :: DaemonInstanceEntry(CMessage *const  pMsg, CApp * pApp)
 {
     u16 wCurEvent = pMsg->event;
     if(EVENT_REQ_INSCONNECT == pMsg->event)
     {
-        if(m_dwCurInsNum < MAXINS)
+        if(m_dwCurInsNum < MAXINS) //记录连接的用户信息
         {
-            m_pUserInfo[m_dwCurInsNum].pMsg = malloc(sizeof(CMessage));
+            m_pUserInfo[m_dwCurInsNum].pMsg = (CMessage *)malloc(sizeof(CMessage));
+            memcpy(m_pUserInfo[m_dwCurInsNum].pMsg, pMsg, sizeof(CMessage));
+            m_pUserInfo[m_dwCurInsNum].dwNumber = m_dwCurInsNum + 1;
+            m_pUserInfo[m_dwCurInsNum].dwState = 1;
+            m_dwCurInsNum++;
+        }
+        else
+        {
+            printf("服务器正忙，稍后再试(未实现)\n");
+        
         }
     }
+    else if(EVENT_REQ_CATOTHERS == wCurEvent)
+    {
+        CatOthers((CMessage*)pMsg->content);
+    }
+
 }
 
 void CServerInstance :: InstanceEntry(CMessage *const pMsg)
 {
     /*获取当前实例的状态*/
     u16 wCurState = CurState();
-
     switch (wCurState)
     {
 
@@ -98,7 +111,7 @@ void CServerInstance :: Idle_Req_InsConnect(CMessage *const pMsg)
 {
     printf("client %d has connected!\n", pMsg->srcnode);
     OspPost(pMsg->srcid, EVENT_ACK_INSCONNECT, NULL, 0, pMsg->srcnode, MAKEIID(this->GetAppID(), this->GetInsID()), pMsg->dstnode);
-    printf("服务器进入ACK状态\n");
+    printf("服务器进入ACK状态  insNum = %d\n", GetInsID());
     NextState(S_STATE_ACK);
 }
 
@@ -121,7 +134,8 @@ void CServerInstance :: Ack_Function(CMessage *const pMsg)
 void CServerInstance :: Ack_Req_CatOthers(CMessage *const pMsg)
 {
     OspPost(pMsg->srcid, EVENT_ACK_CATOTHERS, 0, 0, pMsg->srcnode, pMsg->dstid);
-    printf("同意查看用户请求，服务器进入工作状态\n");
+    printf("同意查看用户请求，服务器进入工作状态%d\n",EVENT_REQ_CATOTHERS);
+    OspPost(MAKEIID(SRV_APP_NO, CServerInstance :: DAEMON), EVENT_REQ_CATOTHERS, pMsg, sizeof(CMessage), 0);
     NextState(S_STATE_WORK);
 }
 
