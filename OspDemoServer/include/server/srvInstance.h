@@ -50,6 +50,7 @@ private:
     /*Work״̬*/
     virtual void Work_Function(CMessage *const pMsg);
 
+    void Work_Term_CatOthers(CMessage *const pMsg);
     /*Term״̬*/
     virtual void Term_Function(CMessage *const pMsg);
 

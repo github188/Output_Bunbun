@@ -56,6 +56,7 @@
 typedef struct UserInfo
 {
     CMessage *pMsg;
+    s8 pByAlias[20];
     s32 dwNumber;
     s32 dwState;
 

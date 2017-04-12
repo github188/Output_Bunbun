@@ -12,6 +12,7 @@ CServerInstance :: CServerInstance()
 
     AckEventFunction[GetMain(EVENT_REQ_CATOTHERS)][GetBran(EVENT_REQ_CATOTHERS)] = &CServerInstance :: Ack_Req_CatOthers;
 
+    WorkEventFunction[GetMain(EVENT_TERM_CATOTHERS)][GetBran(EVENT_TERM_CATOTHERS)] = &CServerInstance :: Work_Term_CatOthers;
 }
 
 
@@ -22,10 +23,12 @@ void CServerInstance :: DaemonInstanceEntry(CMessage *const  pMsg, CApp * pApp)
     {
         if(m_dwCurInsNum < MAXINS) //记录连接的用户信息
         {
+ 
             m_pUserInfo[m_dwCurInsNum].pMsg = (CMessage *)malloc(sizeof(CMessage));
             memcpy(m_pUserInfo[m_dwCurInsNum].pMsg, pMsg, sizeof(CMessage));
             m_pUserInfo[m_dwCurInsNum].dwNumber = m_dwCurInsNum + 1;
             m_pUserInfo[m_dwCurInsNum].dwState = 1;
+            strcpy(m_pUserInfo[m_dwCurInsNum].pByAlias, (s8*)pMsg->content);
             m_dwCurInsNum++;
         }
         else
@@ -37,6 +40,7 @@ void CServerInstance :: DaemonInstanceEntry(CMessage *const  pMsg, CApp * pApp)
     else if(EVENT_REQ_CATOTHERS == wCurEvent)
     {
         CatOthers((CMessage*)pMsg->content);
+        OspPost(pMsg->srcid, EVENT_TERM_CATOTHERS, NULL, 0, pMsg->srcnode);
     }
 
 }
@@ -134,9 +138,11 @@ void CServerInstance :: Ack_Function(CMessage *const pMsg)
 void CServerInstance :: Ack_Req_CatOthers(CMessage *const pMsg)
 {
     OspPost(pMsg->srcid, EVENT_ACK_CATOTHERS, 0, 0, pMsg->srcnode, pMsg->dstid);
-    printf("同意查看用户请求，服务器进入工作状态%d\n",EVENT_REQ_CATOTHERS);
-    OspPost(MAKEIID(SRV_APP_NO, CServerInstance :: DAEMON), EVENT_REQ_CATOTHERS, pMsg, sizeof(CMessage), 0);
+    OspPost(MAKEIID(SRV_APP_NO, CServerInstance :: DAEMON), EVENT_REQ_CATOTHERS, pMsg, sizeof(CMessage), 0, MAKEIID(SRV_APP_NO, GetInsID()));
+    printf("同意查看用户请求，服务器进入工作状态\n");
     NextState(S_STATE_WORK);
+   
+    
 }
 
 /*
@@ -144,13 +150,24 @@ void CServerInstance :: Ack_Req_CatOthers(CMessage *const pMsg)
 */
 void CServerInstance :: Work_Function(CMessage *const pMsg)
 {
-
+    u16 wCurEvent = pMsg->event;
+    u16 wCurEventMain = GetMain(wCurEvent);
+    u16 wCurEventBran = GetBran(wCurEvent);
+    (this->*WorkEventFunction[wCurEventMain][wCurEventBran])(pMsg);
 }
 
+void CServerInstance :: Work_Term_CatOthers(CMessage *const pMsg)
+{
+    printf("服务器进入终止状态\n");
+    NextState(S_STATE_TERM);
+    OspPost(MAKEIID(GetAppID(), GetInsID()), 1, NULL, 0, 0, 0);
+
+}
 /*
     Term状态对各事件处理的选择
 */
 void CServerInstance :: Term_Function(CMessage *const pMsg)
 {
-
+    printf("服务器进入Ack状态\n");
+    NextState(S_STATE_ACK);
 }

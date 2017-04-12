@@ -5,7 +5,7 @@ struct ConnectInfo *g_pConnectInfo;
 void UserInterface()
 {
     printf("-------------------------------------\n\
-            1.未实现\n\
+            1.保留业务\n\
             2.查看其他用户\n\
             3.转发消息\n\
             4.群发消息\n\
@@ -30,15 +30,20 @@ Please intput your command:\n");
         case U_SENDFILE:
             break;
         case U_SENDCHAR:
+            OspPost(MAKEIID(CLT_APP_NO, 1), U_SENDCHAR, 0, 0, 0, MAKEIID(CLT_APP_NO, 1), 0);
             break;
         case U_DISCONNECT:
             break;
         case U_CLEAR:
+            system("cls");
+            UserInterface();
             break;
         default:
+            printf("不存在的指令\n");
+            UserInterface();
             break;
     }
-    
+
 
 }
 

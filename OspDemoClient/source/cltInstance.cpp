@@ -1,6 +1,9 @@
 #include "cltInstance.h"
 
-
+void printE(u16 wEvent)
+{
+    printf("该事件是%hd\n", wEvent);
+}
 CClientInstance :: CClientInstance()
 {
     NextState(C_STATE_IDLE);
@@ -57,6 +60,7 @@ void CClientInstance :: InstanceEntry(CMessage *const pMsg)
             break;
         case C_STATE_WORK:
             Work_Function(pMsg);
+            
             break;
         case C_STATE_TERM:
             Term_Function(pMsg);
@@ -85,7 +89,7 @@ void CClientInstance :: Idle_Req_InsConnect(CMessage *const pMsg)
 
     /*连接同时，需要服务器分配一个实例处理该客户端,以便后面通讯使用*/
     s32 rtn = -1;
-    rtn = OspPost(MAKEIID(SRV_APP_NO, CClientInstance :: DAEMON), EVENT_REQ_INSCONNECT, NULL, 0, g_pConnectInfo->dstnode, MAKEIID(CLT_APP_NO, 1));
+    rtn = OspPost(MAKEIID(SRV_APP_NO, CClientInstance :: DAEMON), EVENT_REQ_INSCONNECT, "xiaoming", 9, g_pConnectInfo->dstnode, MAKEIID(CLT_APP_NO, 1));
     rtn = OspPost(MAKEIID(SRV_APP_NO, CClientInstance :: PENDING), EVENT_REQ_INSCONNECT, NULL, 0, g_pConnectInfo->dstnode, MAKEIID(CLT_APP_NO, 1));
     if(0 == rtn)
     {
@@ -106,7 +110,10 @@ void CClientInstance :: Idle_Ack_InsConnect(CMessage *const pMsg)
    
     if(pMsg->event == EVENT_ACK_INSCONNECT)
     {
-        memcpy(g_pConnectInfo->pMsg, pMsg, sizeof(CMessage));
+        if(NULL == pMsg->content)
+        {
+            memcpy(g_pConnectInfo->pMsg, pMsg, sizeof(CMessage));
+        }
         printf("已连接至服务器实例，进入连接状态\n");
         NextState(C_STATE_CONNECT);
         UserInterface();
@@ -179,18 +186,30 @@ void CClientInstance :: Work_Function(CMessage *const pMsg)
 
 void CClientInstance :: Work_Ack_CatOthers(CMessage *const pMsg)
 {
-    printf("用户:%s   状态:在线\n", pMsg->dstAlias);
+    printf("用户:%s 状态:在线\n", pMsg->content);
 }
 
 void CClientInstance :: Work_Term_CatOthers(CMessage *const pMsg)
 {
     printf("显示用户信息完毕\n");
-
+    printf("进入终止状态\n");
+    NextState(C_STATE_TERM);
+    OspPost(MAKEIID(GetAppID(), GetInsID()), 1, NULL, 0, 0);
 }
 /*
     终止状态下对各事件处理的选择
 */
 void CClientInstance :: Term_Function(CMessage *const pMsg)
 {
-
+    printE(pMsg->event);
+    printf("输入'q'终结此次业务\n");
+    while(getchar() != 'q')
+    {
+    }
+    printf("此次业务终结\n");
+    printf("进入空闲状态\n");
+    NextState(C_STATE_IDLE);
+    OspPost(MAKEIID(GetAppID(),GetInsID()), EVENT_ACK_INSCONNECT, "local", 6, 0);
 }
+
+

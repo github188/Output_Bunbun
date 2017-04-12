@@ -56,6 +56,7 @@
 typedef struct UserInfo
 {
     CMessage *pMsg;
+    s8 pByAlias[20];
     s32 dwNumber;
     s32 dwState;
 
@@ -124,7 +125,7 @@ typedef struct  OnLineUser
 */
 
 #define S_STATE_IDLE (u16)(0)
-#define S_STATE_REQ  (u16)(1)
+#define S_STATE_REQ  (u16)(1)           //ÎÞÓÃ×´Ì¬
 #define S_STATE_ACK  (u16)(2)
 #define S_STATE_WORK (u16)(3)
 #define S_STATE_TERM (u16)(4)
