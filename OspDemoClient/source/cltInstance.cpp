@@ -11,9 +11,12 @@ CClientInstance :: CClientInstance()
     IdleEventFunction[GetMain(EVENT_ACK_INSCONNECT)][GetBran(EVENT_ACK_INSCONNECT)] = &CClientInstance :: Idle_Ack_InsConnect;
 
     ReqEventFunction[GetMain(EVENT_ACK_CATOTHERS)][GetBran(EVENT_ACK_CATOTHERS)] = &CClientInstance :: Req_Ack_CatOthers;
+    ReqEventFunction[GetMain(EVENT_ACK_SENDFILE)][GetBran(EVENT_ACK_SENDFILE)] = &CClientInstance :: Req_Ack_SendFile;
 
     WorkEventFunction[GetMain(EVENT_ACK_CATOTHERS)][GetBran(EVENT_ACK_CATOTHERS)] = &CClientInstance :: Work_Ack_CatOthers;
     WorkEventFunction[GetMain(EVENT_TERM_CATOTHERS)][GetBran(EVENT_TERM_CATOTHERS)] = &CClientInstance :: Work_Term_CatOthers;
+
+    WorkEventFunction[GetMain(EVENT_ACK_SENDFILE)][GetBran(EVENT_ACK_SENDFILE)] = &CClientInstance :: Work_Ack_SendFile;
 
 }
 
@@ -55,8 +58,6 @@ void CClientInstance :: InstanceEntry(CMessage *const pMsg)
             break;
         case C_STATE_REQ:
             Req_Function(pMsg);
-            printf("进入工作状态\n");
-            NextState(C_STATE_WORK);
             break;
         case C_STATE_WORK:
             Work_Function(pMsg);
@@ -142,7 +143,7 @@ void CClientInstance :: Connect_Function(CMessage *const pMsg)
     {
         printf("该消息是用户自定义的消息%hd\n", wCurEvent);
         
-        OspPost(g_pConnectInfo->pMsg->srcid, EVENT_REQ_CATOTHERS, 0, 0, g_pConnectInfo->pMsg->srcnode, MAKEIID(CLT_APP_NO, 1));
+        OspPost(g_pConnectInfo->pMsg->srcid, (EVENT_REQ + wCurEvent*EVENT_T), 0, 0, g_pConnectInfo->pMsg->srcnode, MAKEIID(CLT_APP_NO, 1));
 
     }
     else
@@ -170,7 +171,19 @@ void CClientInstance :: Req_Ack_CatOthers(CMessage *const pMsg)
 {
     u16 wCurEvent = pMsg->event;
     printf("服务器同意查看用户请求\n");
+    printf("进入工作状态\n");
+    NextState(C_STATE_WORK);
     
+}
+
+void CClientInstance :: Req_Ack_SendFile(CMessage *const pMsg)
+{
+    u16 wCurEvent = pMsg->event;
+    printf("服务器同意接收发送文件\n");
+    printf("进入工作状态\n");
+    NextState(C_STATE_WORK);
+    OspPost(MAKEIID(GetAppID(), GetInsID()), EVENT_ACK_SENDFILE, NULL, 0, 0, 0);
+
 }
 
 /*
@@ -189,6 +202,12 @@ void CClientInstance :: Work_Ack_CatOthers(CMessage *const pMsg)
     printf("用户:%s 状态:在线\n", pMsg->content);
 }
 
+void CClientInstance :: Work_Ack_SendFile(CMessage *const pMsg)
+{
+   
+    sendFile(pMsg);
+
+}
 void CClientInstance :: Work_Term_CatOthers(CMessage *const pMsg)
 {
     printf("显示用户信息完毕\n");

@@ -11,8 +11,11 @@ CServerInstance :: CServerInstance()
     IdleEventFunction[GetMain(EVENT_ACK_INSCONNECT)][GetBran(EVENT_ACK_INSCONNECT)] = &CServerInstance :: Idle_Ack_InsConnect;
 
     AckEventFunction[GetMain(EVENT_REQ_CATOTHERS)][GetBran(EVENT_REQ_CATOTHERS)] = &CServerInstance :: Ack_Req_CatOthers;
+    AckEventFunction[GetMain(EVENT_REQ_SENDFILE)][GetBran(EVENT_REQ_SENDFILE)] = &CServerInstance :: Ack_Req_SendFile;
 
     WorkEventFunction[GetMain(EVENT_TERM_CATOTHERS)][GetBran(EVENT_TERM_CATOTHERS)] = &CServerInstance :: Work_Term_CatOthers;
+
+    WorkEventFunction[GetMain(EVENT_ACK_SENDFILE)][GetBran(EVENT_ACK_SENDFILE)] = &CServerInstance :: Work_Ack_SendFile;
 }
 
 
@@ -141,10 +144,16 @@ void CServerInstance :: Ack_Req_CatOthers(CMessage *const pMsg)
     OspPost(MAKEIID(SRV_APP_NO, CServerInstance :: DAEMON), EVENT_REQ_CATOTHERS, pMsg, sizeof(CMessage), 0, MAKEIID(SRV_APP_NO, GetInsID()));
     printf("同意查看用户请求，服务器进入工作状态\n");
     NextState(S_STATE_WORK);
-   
-    
+     
 }
 
+void CServerInstance :: Ack_Req_SendFile(CMessage *const pMsg)
+{
+    OspPost(pMsg->srcid, EVENT_ACK_SENDFILE, NULL, 0, pMsg->srcnode, pMsg->dstid);
+    printf("同意接受用户传输的文件，服务器进入工作状态\n");
+    NextState(S_STATE_WORK);
+
+}
 /*
     Work状态对各事件处理的选择
 */
@@ -162,6 +171,11 @@ void CServerInstance :: Work_Term_CatOthers(CMessage *const pMsg)
     NextState(S_STATE_TERM);
     OspPost(MAKEIID(GetAppID(), GetInsID()), 1, NULL, 0, 0, 0);
 
+}
+
+void CServerInstance :: Work_Ack_SendFile(CMessage *const pMsg)
+{
+    ReadFile(pMsg);
 }
 /*
     Term状态对各事件处理的选择

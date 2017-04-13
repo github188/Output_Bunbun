@@ -28,6 +28,7 @@ Please intput your command:\n");
         case U_TRANSALL:
             break;
         case U_SENDFILE:
+            OspPost(MAKEIID(CLT_APP_NO, 1), U_SENDFILE, 0, 0, 0, MAKEIID(CLT_APP_NO, 1), 0);
             break;
         case U_SENDCHAR:
             OspPost(MAKEIID(CLT_APP_NO, 1), U_SENDCHAR, 0, 0, 0, MAKEIID(CLT_APP_NO, 1), 0);

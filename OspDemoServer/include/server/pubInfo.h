@@ -44,6 +44,10 @@
 #define EVENT_TERM_CATOTHERS           (u16)(EVENT_T*2 + EVENT_TERM)
 #define EVENT_TIMEOUT_CATOTHERS        (u16)(EVENT_T*2 + EVENT_TIMEOUT)
 
+#define EVENT_REQ_SENDFILE             (u16)(EVENT_T*5 + EVENT_REQ)
+#define EVENT_ACK_SENDFILE             (u16)(EVENT_T*5 + EVENT_ACK)
+#define EVENT_TERM_SENDFILE            (u16)(EVENT_T*5 + EVENT_TERM)
+#define EVENT_TIMEOUT_SENDFILE         (u16)(EVENT_T*5 + EVENT_TIMEOUT)
 
 /*
     用户自定义传播
@@ -125,7 +129,7 @@ typedef struct  OnLineUser
 */
 
 #define S_STATE_IDLE (u16)(0)
-#define S_STATE_REQ  (u16)(1)
+#define S_STATE_REQ  (u16)(1)           //无用状态
 #define S_STATE_ACK  (u16)(2)
 #define S_STATE_WORK (u16)(3)
 #define S_STATE_TERM (u16)(4)
@@ -146,6 +150,24 @@ typedef struct  OnLineUser
 */
 #define IPSTR_MAX 50
 
+/*
+    实例最大数
+*/
 #define MAXINS 8
 
+/*
+    文件名最多字符
+*/
+#define MAXFILENAME 50
+#define BUFFSIZE 1024
+/*
+    发送或接受的文件包信息
+*/
+typedef struct CFileMessage
+{
+    s8 pFileName[MAXFILENAME];
+    s8 pBuf[BUFFSIZE];
+    s64 fileSize;
+    s64 curLocal;
+}CFileMessage;
 #endif //pubInfo.h

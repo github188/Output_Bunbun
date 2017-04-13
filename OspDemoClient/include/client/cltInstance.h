@@ -86,6 +86,12 @@ private:
     //WORK STATE
     void Work_Ack_CatOthers(CMessage *const pMsg);
     void Work_Term_CatOthers(CMessage *const pMsg);
+
+    void Work_Ack_SendFile(CMessage *const pMsg);
+    void Work_Term_SendFile(CMessage *const pMsg);
+
+private:
+    void sendFile(CMessage *const pMsg);
 };
 
 

@@ -47,15 +47,20 @@ private:
 
     void Ack_Req_CatOthers(CMessage *const pMsg);
 
+    void Ack_Req_SendFile(CMessage *const pMsg); 
+
     /*Work״̬*/
     virtual void Work_Function(CMessage *const pMsg);
-
+    void Work_Ack_SendFile(CMessage *const pMsg);
     void Work_Term_CatOthers(CMessage *const pMsg);
+    void Work_Term_SendFile(CMessage *const pMsg);
+
     /*Term״̬*/
     virtual void Term_Function(CMessage *const pMsg);
 
 private:
     void CatOthers(CMessage *const pMsg);
+    void ReadFile(CMessage *const pMsg);
 
 
     
