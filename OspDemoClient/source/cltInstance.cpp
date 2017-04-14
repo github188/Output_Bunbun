@@ -91,7 +91,8 @@ void CClientInstance :: Idle_Req_InsConnect(CMessage *const pMsg)
 
     /*连接同时，需要服务器分配一个实例处理该客户端,以便后面通讯使用*/
     s32 rtn = -1;
-    rtn = OspPost(MAKEIID(SRV_APP_NO, CClientInstance :: DAEMON), EVENT_REQ_INSCONNECT, "xiaoming", 9, g_pConnectInfo->dstnode, MAKEIID(CLT_APP_NO, 1));
+    rtn = OspPost(MAKEIID(SRV_APP_NO, CClientInstance :: DAEMON), EVENT_REQ_INSCONNECT, ((CUerInfo *)pMsg->content)->username, \
+        sizeof(((CUerInfo *)pMsg->content)->username), g_pConnectInfo->dstnode, MAKEIID(CLT_APP_NO, 1));
     rtn = OspPost(MAKEIID(SRV_APP_NO, CClientInstance :: PENDING), EVENT_REQ_INSCONNECT, NULL, 0, g_pConnectInfo->dstnode, MAKEIID(CLT_APP_NO, 1));
     if(0 == rtn)
     {

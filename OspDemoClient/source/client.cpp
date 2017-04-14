@@ -34,6 +34,7 @@ Please intput your command:\n");
             OspPost(MAKEIID(CLT_APP_NO, 1), U_SENDCHAR, 0, 0, 0, MAKEIID(CLT_APP_NO, 1), 0);
             break;
         case U_DISCONNECT:
+            OspPost(MAKEIID(CLT_APP_NO, 1), U_DISCONNECT, 0, 0, 0, MAKEIID(CLT_APP_NO, 1), 0);
             break;
         case U_CLEAR:
             system("cls");
@@ -78,15 +79,21 @@ void UserInit()
 
 int main()
 {
+
     s32 rtn = -1;
     g_pConnectInfo = (struct ConnectInfo *)malloc(sizeof(struct ConnectInfo));
     g_pConnectInfo->pMsg = (CMessage *)malloc(sizeof(CMessage));
+
+    CUserInfo *pCltUserInfo = (CUerInfo *)malloc(sizeof(CUerInfo));
     UserInit();
 
     s8 pbyAddr[IPSTR_MAX];
     u16 wTcpPort;
     printf("输入你需要连接的服务器地址和端口(地址与端口间空格分隔):\n");
     scanf("%s %d", pbyAddr, &wTcpPort);
+    printf("请输入你的用户名: \n");
+    scanf("%s", pCltUserInfo->username);
+
     u32 dwIpv4Addr = inet_addr(pbyAddr);
     /*连接服务器测试*/
     g_pConnectInfo->dstnode = OspConnectTcpNode(dwIpv4Addr, wTcpPort, 10, 3, 1, 0);
@@ -95,7 +102,7 @@ int main()
     if( g_pConnectInfo->dstnode != 0)
     {
         printf("connect server success\n");
-        rtn = OspPost(MAKEIID(CLT_APP_NO, 1), EVENT_REQ_INSCONNECT, NULL, 0, 0);
+        rtn = OspPost(MAKEIID(CLT_APP_NO, 1), EVENT_REQ_INSCONNECT, pCltUserInfo, sizeof(CUerInfo), 0);
         
     }
     else
