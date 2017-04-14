@@ -166,8 +166,10 @@ typedef struct  OnLineUser
 typedef struct CFileMessage
 {
     s8 pFileName[MAXFILENAME];
+    s8 pFilePath[MAXFILENAME];
     s8 pBuf[BUFFSIZE];
     s64 fileSize;
     s64 curLocal;
+    s64 curBufSize;
 }CFileMessage;
 #endif //pubInfo.h

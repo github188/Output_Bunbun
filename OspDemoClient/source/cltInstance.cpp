@@ -17,6 +17,7 @@ CClientInstance :: CClientInstance()
     WorkEventFunction[GetMain(EVENT_TERM_CATOTHERS)][GetBran(EVENT_TERM_CATOTHERS)] = &CClientInstance :: Work_Term_CatOthers;
 
     WorkEventFunction[GetMain(EVENT_ACK_SENDFILE)][GetBran(EVENT_ACK_SENDFILE)] = &CClientInstance :: Work_Ack_SendFile;
+    WorkEventFunction[GetMain(EVENT_TERM_SENDFILE)][GetBran(EVENT_TERM_SENDFILE)] = &CClientInstance :: Work_Term_SendFile;
 
 }
 
@@ -208,9 +209,19 @@ void CClientInstance :: Work_Ack_SendFile(CMessage *const pMsg)
     sendFile(pMsg);
 
 }
+
 void CClientInstance :: Work_Term_CatOthers(CMessage *const pMsg)
 {
     printf("显示用户信息完毕\n");
+    printf("进入终止状态\n");
+    NextState(C_STATE_TERM);
+    OspPost(MAKEIID(GetAppID(), GetInsID()), 1, NULL, 0, 0);
+}
+
+void CClientInstance :: Work_Term_SendFile(CMessage *const pMsg)
+{
+    printf("100%%已传输\n");
+    printf("文件上传完毕\n");
     printf("进入终止状态\n");
     NextState(C_STATE_TERM);
     OspPost(MAKEIID(GetAppID(), GetInsID()), 1, NULL, 0, 0);

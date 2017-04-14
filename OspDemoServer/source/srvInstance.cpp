@@ -16,6 +16,7 @@ CServerInstance :: CServerInstance()
     WorkEventFunction[GetMain(EVENT_TERM_CATOTHERS)][GetBran(EVENT_TERM_CATOTHERS)] = &CServerInstance :: Work_Term_CatOthers;
 
     WorkEventFunction[GetMain(EVENT_ACK_SENDFILE)][GetBran(EVENT_ACK_SENDFILE)] = &CServerInstance :: Work_Ack_SendFile;
+    WorkEventFunction[GetMain(EVENT_TERM_SENDFILE)][GetBran(EVENT_TERM_SENDFILE)] = &CServerInstance :: Work_Term_SendFile;
 }
 
 
@@ -176,6 +177,13 @@ void CServerInstance :: Work_Term_CatOthers(CMessage *const pMsg)
 void CServerInstance :: Work_Ack_SendFile(CMessage *const pMsg)
 {
     ReadFile(pMsg);
+}
+
+void CServerInstance :: Work_Term_SendFile(CMessage *const pMsg)
+{
+    printf("服务器进入终止状态\n");
+    NextState(S_STATE_TERM);
+    OspPost(MAKEIID(GetAppID(), GetInsID()), 1, NULL, 0, 0, 0);
 }
 /*
     Term状态对各事件处理的选择
