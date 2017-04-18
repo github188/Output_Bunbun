@@ -1,6 +1,6 @@
-#include "readFile.h"
+#include "rcvFile.h"
 
-void CServerInstance :: ReadFile(CMessage *const pMsg)
+void CServerInstance::rcvFile(CMessage *const pMsg)
 {
    
     CFileMessage *pFMsg = (CFileMessage *)malloc(sizeof(CFileMessage));
@@ -12,12 +12,11 @@ void CServerInstance :: ReadFile(CMessage *const pMsg)
 
     s8 pFilePath[MAXFILENAME] = "C:\\Users\\Reisen\\Desktop\\test\\";
     strcat(pFilePath, ((CFileMessage*)pMsg->content)->pFileName);
-
-    //printf("filename : %s\n", ((CFileMessage*)pMsg->content)->pFileName);
-    //printf("filepath : %s\n", pFilePath);
-    FILE *fp;
-    fp = fopen(pFilePath, "a+");
-    if(NULL == fp)
+    if(1 == pFMsg->curLocal)
+    {
+        fp = fopen(pFilePath, "wb");
+    }
+    if(!fp)
     {
         printf("新建文件出错\n");
     }
@@ -27,18 +26,20 @@ void CServerInstance :: ReadFile(CMessage *const pMsg)
         if(BUFFSIZE*pFMsg->curLocal >= pFMsg->fileSize)
         {
             printf("100%%写入成功\n");
+            fclose(fp);
             OspPost(pMsg->srcid, EVENT_TERM_SENDFILE, pFMsg, sizeof(CFileMessage), pMsg->srcnode, pMsg->dstid);
             OspPost(MAKEIID(GetAppID(), GetInsID()), EVENT_TERM_SENDFILE, NULL, 0, 0);
         }
         else
         {
+            //printf("%s\n", ((CFileMessage*)pMsg->content)->pBuf);
             printf("%.2f%%写入成功\n", ((float)pFMsg->curLocal)/((float)pFMsg->fileSize/BUFFSIZE)*100);
             OspPost(pMsg->srcid, EVENT_ACK_SENDFILE, pFMsg, sizeof(CFileMessage), pMsg->srcnode, pMsg->dstid);
         }
         
     
     }
-    fclose(fp);
+    
 
 
 

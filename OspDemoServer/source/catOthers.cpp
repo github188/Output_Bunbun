@@ -1,6 +1,6 @@
 #include "srvInstance.h"
 
-void CServerInstance :: CatOthers(CMessage *const pMsg)
+void CServerInstance::catOthers(CMessage *const pMsg)
 {
 
     for(s32 i = 0; i < m_dwCurInsNum; i++)

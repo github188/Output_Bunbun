@@ -57,6 +57,13 @@
 #define EVENT_TERM_SENDFILE            (u16)(EVENT_T*5 + EVENT_TERM)
 #define EVENT_TIMEOUT_SENDFILE         (u16)(EVENT_T*5 + EVENT_TIMEOUT)
 
+/*====================================================================
+        用户断开连接相关定义
+====================================================================*/
+#define EVENT_REQ_DISCONNECT           (u16)(EVENT_T*7 + EVENT_REQ)
+#define EVENT_ACK_DISCONNECT           (u16)(EVENT_T*7 + EVENT_ACK)
+#define EVENT_TERM_DISCONNECT          (u16)(EVENT_T*7 + EVENT_TERM)
+#define EVENT_TIMEOUT_DISCONNECT       (u16)(EVENT_T*7 + EVENT_TIMEOUT)
 
 /*====================================================================
 结构体名：UserInfo

@@ -1,10 +1,9 @@
 #include "sendFile.h"
-
-void CClientInstance :: sendFile(CMessage *const pMsg)
+#include "md5.h"
+void CClientInstance::sendFile(CMessage *const pMsg)
 {
     CFileMessage *pFMsg = (CFileMessage *)malloc(sizeof(CFileMessage));
     s8 pFilePath[MAXFILENAME];
-    FILE *fp;
     if(NULL == pMsg->content)
     {
         printf("请输入需要传送的文件的路径:\n");
@@ -12,14 +11,22 @@ void CClientInstance :: sendFile(CMessage *const pMsg)
         strcpy(pFMsg->pFilePath, pFilePath);
         strcpy(pFMsg->pFileName, GetFileName(pFilePath));
         pFMsg->curLocal = 1;
-        /*
+        fp = fopen(pFilePath, "rb");
+        if(!fp)
+        {
+            printf("打开文件出错\n");
+        }
+        else
+        {
+       /*
              获取文件大小
         */
-        fp = fopen(pFilePath, "r");
-        fseek(fp, 0, SEEK_END);
-        pFMsg->fileSize = ftell(fp);
-        printf("filesize : %d\n", pFMsg->fileSize);
-        fclose(fp);
+            printf("fp = %d\n", fp);
+            fseek(fp, 0, SEEK_END);
+            pFMsg->fileSize = ftell(fp);
+            printf("filesize : %d\n", pFMsg->fileSize);
+            fseek(fp, 0, SEEK_SET);
+        }
     }
     else
     {
@@ -36,21 +43,19 @@ void CClientInstance :: sendFile(CMessage *const pMsg)
         
     }
     
-    fp = fopen(pFMsg->pFilePath, "r");
-    fseek(fp, (pFMsg->curLocal-1)*BUFFSIZE, SEEK_SET);
-    if(NULL == fp)
+    if(fp)
     {
-        printf("打开文件出错\n");
-    }
-    else
-    {
+        
         pFMsg->curBufSize = pFMsg->fileSize - (pFMsg->curLocal - 1)*BUFFSIZE;
         if(BUFFSIZE*pFMsg->curLocal >= pFMsg->fileSize)
         {
             if(fread(pFMsg->pBuf, pFMsg->curBufSize, 1, fp) <= 1)
             {
+                
                 OspPost(g_pConnectInfo->pMsg->srcid, EVENT_ACK_SENDFILE, pFMsg, sizeof(CFileMessage), g_pConnectInfo->pMsg->srcnode,\
                     g_pConnectInfo->pMsg->dstid);
+                fclose(fp);
+                
             } 
         }
         else
@@ -58,6 +63,7 @@ void CClientInstance :: sendFile(CMessage *const pMsg)
             pFMsg->curBufSize = BUFFSIZE;
             if(fread(pFMsg->pBuf, BUFFSIZE, 1, fp) <= 1)
             {
+               
                 OspPost(g_pConnectInfo->pMsg->srcid, EVENT_ACK_SENDFILE, pFMsg, sizeof(CFileMessage), g_pConnectInfo->pMsg->srcnode,\
                     g_pConnectInfo->pMsg->dstid);
             }
@@ -65,7 +71,7 @@ void CClientInstance :: sendFile(CMessage *const pMsg)
     
     
     }
-    fclose(fp);
+    
 
 }
 

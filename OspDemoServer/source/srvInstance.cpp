@@ -2,25 +2,31 @@
 
 
 
-CServerInstance :: CServerInstance()
+CServerInstance::CServerInstance()
 {
   
     NextState(S_STATE_IDLE);
     m_dwCurInsNum = 0;//起始状态，没有用户连接
-    IdleEventFunction[GetMain(EVENT_REQ_INSCONNECT)][GetBran(EVENT_REQ_INSCONNECT)] = &CServerInstance :: Idle_Req_InsConnect;
-    IdleEventFunction[GetMain(EVENT_ACK_INSCONNECT)][GetBran(EVENT_ACK_INSCONNECT)] = &CServerInstance :: Idle_Ack_InsConnect;
+    IdleEventFunction[GetMain(EVENT_REQ_INSCONNECT)][GetBran(EVENT_REQ_INSCONNECT)] = &CServerInstance::Idle_Req_InsConnect;
+    IdleEventFunction[GetMain(EVENT_ACK_INSCONNECT)][GetBran(EVENT_ACK_INSCONNECT)] = &CServerInstance::Idle_Ack_InsConnect;
 
-    AckEventFunction[GetMain(EVENT_REQ_CATOTHERS)][GetBran(EVENT_REQ_CATOTHERS)] = &CServerInstance :: Ack_Req_CatOthers;
-    AckEventFunction[GetMain(EVENT_REQ_SENDFILE)][GetBran(EVENT_REQ_SENDFILE)] = &CServerInstance :: Ack_Req_SendFile;
+    AckEventFunction[GetMain(EVENT_REQ_CATOTHERS)][GetBran(EVENT_REQ_CATOTHERS)] = &CServerInstance::Ack_Req_CatOthers;
+    AckEventFunction[GetMain(EVENT_REQ_SENDFILE)][GetBran(EVENT_REQ_SENDFILE)] = &CServerInstance::Ack_Req_SendFile;
+    AckEventFunction[GetMain(EVENT_REQ_DISCONNECT)][GetBran(EVENT_REQ_DISCONNECT)] = &CServerInstance::Ack_Req_DisConnect;
+    AckEventFunction[GetMain(EVENT_ACK_DISCONNECT)][GetBran(EVENT_ACK_DISCONNECT)] = &CServerInstance::Ack_Ack_DisConnect;
 
-    WorkEventFunction[GetMain(EVENT_TERM_CATOTHERS)][GetBran(EVENT_TERM_CATOTHERS)] = &CServerInstance :: Work_Term_CatOthers;
+    WorkEventFunction[GetMain(EVENT_TERM_CATOTHERS)][GetBran(EVENT_TERM_CATOTHERS)] = &CServerInstance::Work_Term_CatOthers;
 
-    WorkEventFunction[GetMain(EVENT_ACK_SENDFILE)][GetBran(EVENT_ACK_SENDFILE)] = &CServerInstance :: Work_Ack_SendFile;
-    WorkEventFunction[GetMain(EVENT_TERM_SENDFILE)][GetBran(EVENT_TERM_SENDFILE)] = &CServerInstance :: Work_Term_SendFile;
+    WorkEventFunction[GetMain(EVENT_ACK_SENDFILE)][GetBran(EVENT_ACK_SENDFILE)] = &CServerInstance::Work_Ack_SendFile;
+    WorkEventFunction[GetMain(EVENT_TERM_SENDFILE)][GetBran(EVENT_TERM_SENDFILE)] = &CServerInstance::Work_Term_SendFile;
+
+    TermEventFunction[GetMain(EVENT_REQ_DISCONNECT)][GetBran(EVENT_REQ_DISCONNECT)] = &CServerInstance::Term_Req_DisConnect;
+
+
 }
 
 
-void CServerInstance :: DaemonInstanceEntry(CMessage *const  pMsg, CApp * pApp)
+void CServerInstance::DaemonInstanceEntry(CMessage *const  pMsg, CApp * pApp)
 {
     u16 wCurEvent = pMsg->event;
     if(EVENT_REQ_INSCONNECT == pMsg->event)
@@ -34,22 +40,27 @@ void CServerInstance :: DaemonInstanceEntry(CMessage *const  pMsg, CApp * pApp)
             m_pUserInfo[m_dwCurInsNum].dwState = 1;
             strcpy(m_pUserInfo[m_dwCurInsNum].pByAlias, (s8*)pMsg->content);
             m_dwCurInsNum++;
+            OspPost(MAKEIID(GetAppID(), CServerInstance::PENDING), EVENT_REQ_INSCONNECT, pMsg, sizeof(CMessage), 0);
         }
         else
         {
-            printf("服务器正忙，稍后再试(未实现)\n");
+            printf("服务器正忙（用户连接数超过最大限制），稍后再试(未实现)\n");
         
         }
     }
     else if(EVENT_REQ_CATOTHERS == wCurEvent)
     {
-        CatOthers((CMessage*)pMsg->content);
+        catOthers((CMessage*)pMsg->content);
         OspPost(pMsg->srcid, EVENT_TERM_CATOTHERS, NULL, 0, pMsg->srcnode);
     }
-
+    else if(EVENT_REQ_DISCONNECT == wCurEvent)
+    {
+        OspPost(pMsg->srcid, EVENT_ACK_DISCONNECT, pMsg->content, sizeof(CMessage), 0);
+        
+    }
 }
 
-void CServerInstance :: InstanceEntry(CMessage *const pMsg)
+void CServerInstance::InstanceEntry(CMessage *const pMsg)
 {
     /*获取当前实例的状态*/
     u16 wCurState = CurState();
@@ -89,12 +100,12 @@ void CServerInstance :: InstanceEntry(CMessage *const pMsg)
 /*
     对事件的解析 主、分支函数
 */
-u16 CServerInstance :: GetMain(u16 wEvent)
+u16 CServerInstance::GetMain(u16 wEvent)
 {
     return (wEvent - OSP_USEREVENT_BASE) % EVENT_T;
 }
 
-u16 CServerInstance :: GetBran(u16 wEvent)
+u16 CServerInstance::GetBran(u16 wEvent)
 {
     return (wEvent - OSP_USEREVENT_BASE) / EVENT_T;
 }
@@ -102,7 +113,7 @@ u16 CServerInstance :: GetBran(u16 wEvent)
 /*
     Idle状态对各事件处理的选择
 */
-void CServerInstance :: Idle_Function(CMessage *const pMsg)
+void CServerInstance::Idle_Function(CMessage *const pMsg)
 {
     u16 wCurEvent = pMsg->event;
     u16 wCurEventMain = GetMain(wCurEvent);
@@ -115,15 +126,16 @@ void CServerInstance :: Idle_Function(CMessage *const pMsg)
 /*
     Idle状态对EVENT_INSCONNECT事件簇的处理
 */
-void CServerInstance :: Idle_Req_InsConnect(CMessage *const pMsg)
+void CServerInstance::Idle_Req_InsConnect(CMessage *const pMsg)
 {
-    printf("client %d has connected!\n", pMsg->srcnode);
-    OspPost(pMsg->srcid, EVENT_ACK_INSCONNECT, NULL, 0, pMsg->srcnode, MAKEIID(this->GetAppID(), this->GetInsID()), pMsg->dstnode);
-    printf("服务器进入ACK状态  insNum = %d\n", GetInsID());
+    printf("用户 %s 已连接!\n", ((CMessage *)pMsg->content)->content);
+    OspPost(((CMessage *)pMsg->content)->srcid, EVENT_ACK_INSCONNECT, NULL, 0, ((CMessage *)pMsg->content)->srcnode, 
+        MAKEIID(this->GetAppID(), this->GetInsID()));
+    printf("服务器实例%d已进入ACK状态\n", GetInsID());
     NextState(S_STATE_ACK);
 }
 
-void CServerInstance :: Idle_Ack_InsConnect(CMessage *const pMsg)
+void CServerInstance::Idle_Ack_InsConnect(CMessage *const pMsg)
 {
 
 }
@@ -131,7 +143,7 @@ void CServerInstance :: Idle_Ack_InsConnect(CMessage *const pMsg)
 /*
     Ack状态对各事件处理的选择
 */
-void CServerInstance :: Ack_Function(CMessage *const pMsg)
+void CServerInstance::Ack_Function(CMessage *const pMsg)
 {
     u16 wCurEvent = pMsg->event;
     u16 wCurEventMain = GetMain(wCurEvent);
@@ -139,26 +151,40 @@ void CServerInstance :: Ack_Function(CMessage *const pMsg)
     (this->*AckEventFunction[wCurEventMain][wCurEventBran])(pMsg);
 }
 
-void CServerInstance :: Ack_Req_CatOthers(CMessage *const pMsg)
+void CServerInstance::Ack_Req_CatOthers(CMessage *const pMsg)
 {
     OspPost(pMsg->srcid, EVENT_ACK_CATOTHERS, 0, 0, pMsg->srcnode, pMsg->dstid);
-    OspPost(MAKEIID(SRV_APP_NO, CServerInstance :: DAEMON), EVENT_REQ_CATOTHERS, pMsg, sizeof(CMessage), 0, MAKEIID(SRV_APP_NO, GetInsID()));
+    OspPost(MAKEIID(SRV_APP_NO, CServerInstance::DAEMON), EVENT_REQ_CATOTHERS, pMsg, sizeof(CMessage), 0, MAKEIID(SRV_APP_NO, GetInsID()));
     printf("同意查看用户请求，服务器进入工作状态\n");
     NextState(S_STATE_WORK);
      
 }
 
-void CServerInstance :: Ack_Req_SendFile(CMessage *const pMsg)
+void CServerInstance::Ack_Req_SendFile(CMessage *const pMsg)
 {
     OspPost(pMsg->srcid, EVENT_ACK_SENDFILE, NULL, 0, pMsg->srcnode, pMsg->dstid);
     printf("同意接受用户传输的文件，服务器进入工作状态\n");
     NextState(S_STATE_WORK);
 
 }
+
+void CServerInstance::Ack_Req_DisConnect(CMessage *const pMsg)
+{
+    OspPost(MAKEIID(GetAppID(), CServerInstance::DAEMON), EVENT_REQ_DISCONNECT, pMsg, sizeof(CMessage), 0, MAKEIID(GetAppID(), GetInsID()));//向服务器Daemon请求断连
+}
+
+void CServerInstance::Ack_Ack_DisConnect(CMessage *const pMsg)
+{
+    
+    OspPost(((CMessage *)pMsg->content)->srcid, EVENT_ACK_DISCONNECT, NULL, 0, ((CMessage *)pMsg->content)->srcnode);
+    //printf("用户%s已退出连接\n", m_pUserInfo[GetInsID()].pByAlias);
+    printf("服务器实例%d进入空闲状态\n", GetInsID());
+    NextState(S_STATE_IDLE);
+}
 /*
     Work状态对各事件处理的选择
 */
-void CServerInstance :: Work_Function(CMessage *const pMsg)
+void CServerInstance::Work_Function(CMessage *const pMsg)
 {
     u16 wCurEvent = pMsg->event;
     u16 wCurEventMain = GetMain(wCurEvent);
@@ -166,7 +192,7 @@ void CServerInstance :: Work_Function(CMessage *const pMsg)
     (this->*WorkEventFunction[wCurEventMain][wCurEventBran])(pMsg);
 }
 
-void CServerInstance :: Work_Term_CatOthers(CMessage *const pMsg)
+void CServerInstance::Work_Term_CatOthers(CMessage *const pMsg)
 {
     printf("服务器进入终止状态\n");
     NextState(S_STATE_TERM);
@@ -174,12 +200,12 @@ void CServerInstance :: Work_Term_CatOthers(CMessage *const pMsg)
 
 }
 
-void CServerInstance :: Work_Ack_SendFile(CMessage *const pMsg)
+void CServerInstance::Work_Ack_SendFile(CMessage *const pMsg)
 {
-    ReadFile(pMsg);
+    rcvFile(pMsg);
 }
 
-void CServerInstance :: Work_Term_SendFile(CMessage *const pMsg)
+void CServerInstance::Work_Term_SendFile(CMessage *const pMsg)
 {
     printf("服务器进入终止状态\n");
     NextState(S_STATE_TERM);
@@ -188,8 +214,13 @@ void CServerInstance :: Work_Term_SendFile(CMessage *const pMsg)
 /*
     Term状态对各事件处理的选择
 */
-void CServerInstance :: Term_Function(CMessage *const pMsg)
+void CServerInstance::Term_Function(CMessage *const pMsg)
 {
     printf("服务器进入Ack状态\n");
     NextState(S_STATE_ACK);
+}
+
+void CServerInstance::Term_Req_DisConnect(CMessage *const pMsg)
+{
+    OspPost(MAKEIID(GetAppID(), CServerInstance::DAEMON), EVENT_REQ_DISCONNECT, NULL, 0, 0);
 }

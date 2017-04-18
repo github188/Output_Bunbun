@@ -31,10 +31,10 @@ private:
     u16 GetMain(u16);
     u16 GetBran(u16);
 
-    void (CServerInstance :: *IdleEventFunction[EVENT_MAIN_MAXN][EVENT_BRAN_MAXN])(CMessage *const pMsg);
-    void (CServerInstance :: *AckEventFunction[EVENT_MAIN_MAXN][EVENT_BRAN_MAXN])(CMessage *const pMsg);
-    void (CServerInstance :: *WorkEventFunction[EVENT_MAIN_MAXN][EVENT_BRAN_MAXN])(CMessage *const pMsg);
-    void (CServerInstance :: *TermEventFunction[EVENT_MAIN_MAXN][EVENT_BRAN_MAXN])(CMessage *const pMsg);
+    void (CServerInstance::*IdleEventFunction[EVENT_MAIN_MAXN][EVENT_BRAN_MAXN])(CMessage *const pMsg);
+    void (CServerInstance::*AckEventFunction[EVENT_MAIN_MAXN][EVENT_BRAN_MAXN])(CMessage *const pMsg);
+    void (CServerInstance::*WorkEventFunction[EVENT_MAIN_MAXN][EVENT_BRAN_MAXN])(CMessage *const pMsg);
+    void (CServerInstance::*TermEventFunction[EVENT_MAIN_MAXN][EVENT_BRAN_MAXN])(CMessage *const pMsg);
 
     /*Idle״̬*/
     virtual void Idle_Function(CMessage *const pMsg);
@@ -49,6 +49,10 @@ private:
 
     void Ack_Req_SendFile(CMessage *const pMsg); 
 
+    void Ack_Req_DisConnect(CMessage *const pMsg);
+
+    void Ack_Ack_DisConnect(CMessage *const pMsg);
+
     /*Work״̬*/
     virtual void Work_Function(CMessage *const pMsg);
     void Work_Ack_SendFile(CMessage *const pMsg);
@@ -57,10 +61,11 @@ private:
 
     /*Term״̬*/
     virtual void Term_Function(CMessage *const pMsg);
+    void Term_Req_DisConnect(CMessage *const pMsg);
 
 private:
-    void CatOthers(CMessage *const pMsg);
-    void ReadFile(CMessage *const pMsg);
+    void catOthers(CMessage *const pMsg);
+    void rcvFile(CMessage *const pMsg);
 
 
     

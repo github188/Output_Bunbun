@@ -1,6 +1,6 @@
 #include "srvApp.h"
 
-CServerApp :: CServerApp()
+CServerApp::CServerApp()
 {
     
 

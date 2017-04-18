@@ -31,14 +31,27 @@ private:
     virtual void InstanceEntry(CMessage *const pMsg);
 
 private:
+
+/*====================================================================
+    Osp消息是有一个基准值的，用户在该基准值之上设定了几个新基准值。
+也就是说，对于一个具体的业务请求，他只可能出现这几个基于基准值的消息。
+例如，基准值有REQ,ACK,WORK,TERM...，对于一个具体的业务请求，他只可能出
+现这几种情况的消息，所以可以设定一个这类消息的数量。那么对于发送文件
+这个具体业务来说，有REQ_SENDFILE, ACK_SENDFILE...这些具体消息。而这些消
+息在定义的时候是按基准消息的顺序放一起的，称为一个消息簇。
+    那么ins在收到消息之后，会根据当前ins的状态选择处理该消息的函数。只
+要将该消息号减去基准消息号，除以基准消息簇的长度，就可以得到该消息簇对
+于基准消息簇的偏移量，即具体消息的位置。同样对消息长度取模之后，可以得
+到该消息在消息簇中的位置。
+====================================================================*/
     u16 GetMain(u16);           //得到消息主分支
     u16 GetBran(u16);           //得到消息辅助分支
 
-    void (CClientInstance :: *IdleEventFunction[EVENT_MAIN_MAXN][EVENT_BRAN_MAXN])(CMessage *const pMsg);           //空闲状态处理消息函数簇
-    void (CClientInstance :: *ConnectEventFunction[EVENT_MAIN_MAXN][EVENT_BRAN_MAXN])(CMessage *const pMsg);        //连接状态处理消息函数簇
-    void (CClientInstance :: *ReqEventFunction[EVENT_MAIN_MAXN][EVENT_BRAN_MAXN])(CMessage *const pMsg);            //请求状态处理消息函数簇
-    void (CClientInstance :: *WorkEventFunction[EVENT_MAIN_MAXN][EVENT_BRAN_MAXN])(CMessage *const pMsg);           //工作状态处理消息函数簇
-    void (CClientInstance :: *TermEventFunction[EVENT_MAIN_MAXN][EVENT_BRAN_MAXN])(CMessage *const pMsg);           //终止状态处理消息函数簇
+    void (CClientInstance::*IdleEventFunction[EVENT_MAIN_MAXN][EVENT_BRAN_MAXN])(CMessage *const pMsg);           //空闲状态处理消息函数簇
+    void (CClientInstance::*ConnectEventFunction[EVENT_MAIN_MAXN][EVENT_BRAN_MAXN])(CMessage *const pMsg);        //连接状态处理消息函数簇
+    void (CClientInstance::*ReqEventFunction[EVENT_MAIN_MAXN][EVENT_BRAN_MAXN])(CMessage *const pMsg);            //请求状态处理消息函数簇
+    void (CClientInstance::*WorkEventFunction[EVENT_MAIN_MAXN][EVENT_BRAN_MAXN])(CMessage *const pMsg);           //工作状态处理消息函数簇
+    void (CClientInstance::*TermEventFunction[EVENT_MAIN_MAXN][EVENT_BRAN_MAXN])(CMessage *const pMsg);           //终止状态处理消息函数簇
 
     void Idle_Function(CMessage *const pMsg);                   //空闲状态处理消息入口
     void Connect_Function(CMessage *const pMsg);                //连接状态处理消息入口
@@ -109,10 +122,12 @@ private:
 /*====================================================================
         用户退出，断开连接
 ====================================================================*/
-    void Req_Req_Quit(CMessage *const pMsg);
-    void Req_Ack_Quit(CMessage *const pMsg);
-    void Req_Term_Quit(CMessage *const pMsg);
-    void Req_Timeout_Quit(CMessage *const pMsg);
+    //void Connect_Ack_DisConncet(CMessage *const pMsg);
+
+    void Req_Req_DisConnect(CMessage *const pMsg);
+    void Req_Ack_DisConnect(CMessage *const pMsg);
+    void Req_Term_DisConnect(CMessage *const pMsg);
+    void Req_Timeout_DisConnect(CMessage *const pMsg);
     
     
 

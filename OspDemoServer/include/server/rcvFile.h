@@ -6,6 +6,6 @@
 
 s8 READBUFF[BUFFSIZE];
 
-
+FILE *fp = NULL;
 
 #endif// readFile.h

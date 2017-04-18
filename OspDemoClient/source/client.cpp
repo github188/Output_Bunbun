@@ -79,7 +79,6 @@ void UserInit()
 
 int main()
 {
-
     s32 rtn = -1;
     g_pConnectInfo = (struct ConnectInfo *)malloc(sizeof(struct ConnectInfo));
     g_pConnectInfo->pMsg = (CMessage *)malloc(sizeof(CMessage));
@@ -99,7 +98,7 @@ int main()
     g_pConnectInfo->dstnode = OspConnectTcpNode(dwIpv4Addr, wTcpPort, 10, 3, 1, 0);
 
     system("cls");
-    if( g_pConnectInfo->dstnode != 0)
+    if(g_pConnectInfo->dstnode != 0)
     {
         printf("connect server success\n");
         rtn = OspPost(MAKEIID(CLT_APP_NO, 1), EVENT_REQ_INSCONNECT, pCltUserInfo, sizeof(CUerInfo), 0);
@@ -113,7 +112,9 @@ int main()
     } 
     
 
-    
-    while(1);
+    while(1)
+    {
+        Sleep(1000);
+    };
     return 0;
 }

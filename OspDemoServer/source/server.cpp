@@ -29,7 +29,10 @@ int main()
     UserInit();
     printf("serverApp is running\nand SrvAppId is %d\n", Srv->appId);
 
-    while(1);
+    while(1)
+    {
+        Sleep(1000);
+    }
 
 
 

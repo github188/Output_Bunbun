@@ -5,5 +5,5 @@
 s8 SENDBUFF[BUFFSIZE];
 
 s8 *GetFileName(s8 []);
-
+FILE *fp = NULL;
 #endif

@@ -4,24 +4,25 @@ void printE(u16 wEvent)
 {
     printf("该事件是%hd\n", wEvent);
 }
-CClientInstance :: CClientInstance()
+CClientInstance::CClientInstance()
 {
     NextState(C_STATE_IDLE);
-    IdleEventFunction[GetMain(EVENT_REQ_INSCONNECT)][GetBran(EVENT_REQ_INSCONNECT)] = &CClientInstance :: Idle_Req_InsConnect;
-    IdleEventFunction[GetMain(EVENT_ACK_INSCONNECT)][GetBran(EVENT_ACK_INSCONNECT)] = &CClientInstance :: Idle_Ack_InsConnect;
+    IdleEventFunction[GetMain(EVENT_REQ_INSCONNECT)][GetBran(EVENT_REQ_INSCONNECT)] = &CClientInstance::Idle_Req_InsConnect;
+    IdleEventFunction[GetMain(EVENT_ACK_INSCONNECT)][GetBran(EVENT_ACK_INSCONNECT)] = &CClientInstance::Idle_Ack_InsConnect;
 
-    ReqEventFunction[GetMain(EVENT_ACK_CATOTHERS)][GetBran(EVENT_ACK_CATOTHERS)] = &CClientInstance :: Req_Ack_CatOthers;
-    ReqEventFunction[GetMain(EVENT_ACK_SENDFILE)][GetBran(EVENT_ACK_SENDFILE)] = &CClientInstance :: Req_Ack_SendFile;
+    ReqEventFunction[GetMain(EVENT_ACK_CATOTHERS)][GetBran(EVENT_ACK_CATOTHERS)] = &CClientInstance::Req_Ack_CatOthers;
+    ReqEventFunction[GetMain(EVENT_ACK_SENDFILE)][GetBran(EVENT_ACK_SENDFILE)] = &CClientInstance::Req_Ack_SendFile;
+    ReqEventFunction[GetMain(EVENT_ACK_DISCONNECT)][GetBran(EVENT_ACK_DISCONNECT)] = &CClientInstance::Req_Ack_DisConnect;
 
-    WorkEventFunction[GetMain(EVENT_ACK_CATOTHERS)][GetBran(EVENT_ACK_CATOTHERS)] = &CClientInstance :: Work_Ack_CatOthers;
-    WorkEventFunction[GetMain(EVENT_TERM_CATOTHERS)][GetBran(EVENT_TERM_CATOTHERS)] = &CClientInstance :: Work_Term_CatOthers;
+    WorkEventFunction[GetMain(EVENT_ACK_CATOTHERS)][GetBran(EVENT_ACK_CATOTHERS)] = &CClientInstance::Work_Ack_CatOthers;
+    WorkEventFunction[GetMain(EVENT_TERM_CATOTHERS)][GetBran(EVENT_TERM_CATOTHERS)] = &CClientInstance::Work_Term_CatOthers;
 
-    WorkEventFunction[GetMain(EVENT_ACK_SENDFILE)][GetBran(EVENT_ACK_SENDFILE)] = &CClientInstance :: Work_Ack_SendFile;
-    WorkEventFunction[GetMain(EVENT_TERM_SENDFILE)][GetBran(EVENT_TERM_SENDFILE)] = &CClientInstance :: Work_Term_SendFile;
+    WorkEventFunction[GetMain(EVENT_ACK_SENDFILE)][GetBran(EVENT_ACK_SENDFILE)] = &CClientInstance::Work_Ack_SendFile;
+    WorkEventFunction[GetMain(EVENT_TERM_SENDFILE)][GetBran(EVENT_TERM_SENDFILE)] = &CClientInstance::Work_Term_SendFile;
 
 }
 
-void CClientInstance :: DaemonInstanceEntry(CMessage *const  pMsg, CApp * pApp)
+void CClientInstance::DaemonInstanceEntry(CMessage *const  pMsg, CApp * pApp)
 {
     log( 0, (char *)"Osp: message received in default daemon instance of app %d.\nCheck your daemon implementation, please!\n", GetAppID());
 
@@ -30,18 +31,18 @@ void CClientInstance :: DaemonInstanceEntry(CMessage *const  pMsg, CApp * pApp)
 /*
     对事件的解析 主、分支函数
 */
-u16 CClientInstance :: GetMain(u16 wEvent)
+u16 CClientInstance::GetMain(u16 wEvent)
 {
     return (wEvent - OSP_USEREVENT_BASE) % EVENT_T;
 }
 
-u16 CClientInstance :: GetBran(u16 wEvent)
+u16 CClientInstance::GetBran(u16 wEvent)
 {
     return (wEvent - OSP_USEREVENT_BASE) / EVENT_T;
 }
 
 
-void CClientInstance :: InstanceEntry(CMessage *const pMsg)
+void CClientInstance::InstanceEntry(CMessage *const pMsg)
 {
     /*得到当前消息的类型*/
     u16 wCurState = CurState();
@@ -77,7 +78,7 @@ void CClientInstance :: InstanceEntry(CMessage *const pMsg)
 /*
     Idle状态对各事件处理的选择
 */
-void CClientInstance :: Idle_Function(CMessage *const pMsg)
+void CClientInstance::Idle_Function(CMessage *const pMsg)
 {
     u16 wCurEvent = pMsg->event;
     u16 wCurEventMain = GetMain(wCurEvent);
@@ -86,34 +87,33 @@ void CClientInstance :: Idle_Function(CMessage *const pMsg)
 
 }
 
-void CClientInstance :: Idle_Req_InsConnect(CMessage *const pMsg)
+void CClientInstance::Idle_Req_InsConnect(CMessage *const pMsg)
 {
 
-    /*连接同时，需要服务器分配一个实例处理该客户端,以便后面通讯使用*/
+    /*向服务器Daemon请求分配实例*/
     s32 rtn = -1;
-    rtn = OspPost(MAKEIID(SRV_APP_NO, CClientInstance :: DAEMON), EVENT_REQ_INSCONNECT, ((CUerInfo *)pMsg->content)->username, \
+    rtn = OspPost(MAKEIID(SRV_APP_NO, CClientInstance::DAEMON), EVENT_REQ_INSCONNECT, ((CUerInfo *)pMsg->content)->username, \
         sizeof(((CUerInfo *)pMsg->content)->username), g_pConnectInfo->dstnode, MAKEIID(CLT_APP_NO, 1));
-    rtn = OspPost(MAKEIID(SRV_APP_NO, CClientInstance :: PENDING), EVENT_REQ_INSCONNECT, NULL, 0, g_pConnectInfo->dstnode, MAKEIID(CLT_APP_NO, 1));
     if(0 == rtn)
     {
         
-        printf("服务器分配实例成功!\n");
+        printf("向服务器发送连接实例请求成功\n");
     }
     else
     {
-        printf("服务器分配实例失败!\n");
+        printf("向服务器发送连接实例请求失败!\n");
     }
     
     
 
 }
 
-void CClientInstance :: Idle_Ack_InsConnect(CMessage *const pMsg)
+void CClientInstance::Idle_Ack_InsConnect(CMessage *const pMsg)
 {
    
     if(pMsg->event == EVENT_ACK_INSCONNECT)
     {
-        if(NULL == pMsg->content)
+        if(!(pMsg->content))
         {
             memcpy(g_pConnectInfo->pMsg, pMsg, sizeof(CMessage));
         }
@@ -125,12 +125,12 @@ void CClientInstance :: Idle_Ack_InsConnect(CMessage *const pMsg)
     
 }
 
-void CClientInstance :: Idle_Term_InsConnect(CMessage *const pMsg)
+void CClientInstance::Idle_Term_InsConnect(CMessage *const pMsg)
 {
     printf("尚未连接服务器实例，无法终止\n");
 }
 
-void CClientInstance :: Idle_Timeout_InsConnect(CMessage *const pMsg)
+void CClientInstance::Idle_Timeout_InsConnect(CMessage *const pMsg)
 {
     printf("连接服务器实例超时\n");
 }
@@ -138,14 +138,14 @@ void CClientInstance :: Idle_Timeout_InsConnect(CMessage *const pMsg)
 /*
     连接状态下对各事件处理的选择
 */
-void CClientInstance :: Connect_Function(CMessage *const pMsg)
+void CClientInstance::Connect_Function(CMessage *const pMsg)
 {
     u16 wCurEvent = pMsg->event;
     if(wCurEvent < 10)
     {
         printf("该消息是用户自定义的消息%hd\n", wCurEvent);
         
-        OspPost(g_pConnectInfo->pMsg->srcid, (EVENT_REQ + wCurEvent*EVENT_T), 0, 0, g_pConnectInfo->pMsg->srcnode, MAKEIID(CLT_APP_NO, 1));
+        OspPost(g_pConnectInfo->pMsg->srcid, (EVENT_REQ + wCurEvent*EVENT_T), NULL, 0, g_pConnectInfo->pMsg->srcnode, MAKEIID(CLT_APP_NO, 1));
 
     }
     else
@@ -161,7 +161,7 @@ void CClientInstance :: Connect_Function(CMessage *const pMsg)
 /*
     请求状态下对各事件处理的选择
 */
-void CClientInstance :: Req_Function(CMessage *const pMsg)
+void CClientInstance::Req_Function(CMessage *const pMsg)
 {
     u16 wCurEvent = pMsg->event;
     u16 wCurEventMain = GetMain(wCurEvent);
@@ -169,7 +169,7 @@ void CClientInstance :: Req_Function(CMessage *const pMsg)
     (this->*ReqEventFunction[wCurEventMain][wCurEventBran])(pMsg);
 }
 
-void CClientInstance :: Req_Ack_CatOthers(CMessage *const pMsg)
+void CClientInstance::Req_Ack_CatOthers(CMessage *const pMsg)
 {
     u16 wCurEvent = pMsg->event;
     printf("服务器同意查看用户请求\n");
@@ -178,7 +178,7 @@ void CClientInstance :: Req_Ack_CatOthers(CMessage *const pMsg)
     
 }
 
-void CClientInstance :: Req_Ack_SendFile(CMessage *const pMsg)
+void CClientInstance::Req_Ack_SendFile(CMessage *const pMsg)
 {
     u16 wCurEvent = pMsg->event;
     printf("服务器同意接收发送文件\n");
@@ -188,10 +188,17 @@ void CClientInstance :: Req_Ack_SendFile(CMessage *const pMsg)
 
 }
 
+void CClientInstance::Req_Ack_DisConnect(CMessage *const pMsg)
+{
+    printf("你已断开与服务器连接\n");
+    printf("进入空闲状态\n");
+    NextState(C_STATE_IDLE);
+
+}
 /*
     工作状态下对各事件处理的选择
 */
-void CClientInstance :: Work_Function(CMessage *const pMsg)
+void CClientInstance::Work_Function(CMessage *const pMsg)
 {
     u16 wCurEvent = pMsg->event;
     u16 wCurEventMain = GetMain(wCurEvent);
@@ -199,19 +206,19 @@ void CClientInstance :: Work_Function(CMessage *const pMsg)
     (this->*WorkEventFunction[wCurEventMain][wCurEventBran])(pMsg);
 }
 
-void CClientInstance :: Work_Ack_CatOthers(CMessage *const pMsg)
+void CClientInstance::Work_Ack_CatOthers(CMessage *const pMsg)
 {
-    printf("用户:%s 状态:在线\n", pMsg->content);
+    printf("用户:%s 状态:在线\n", pMsg->content);//状态仍需自定义
 }
 
-void CClientInstance :: Work_Ack_SendFile(CMessage *const pMsg)
+void CClientInstance::Work_Ack_SendFile(CMessage *const pMsg)
 {
    
     sendFile(pMsg);
 
 }
 
-void CClientInstance :: Work_Term_CatOthers(CMessage *const pMsg)
+void CClientInstance::Work_Term_CatOthers(CMessage *const pMsg)
 {
     printf("显示用户信息完毕\n");
     printf("进入终止状态\n");
@@ -219,7 +226,7 @@ void CClientInstance :: Work_Term_CatOthers(CMessage *const pMsg)
     OspPost(MAKEIID(GetAppID(), GetInsID()), 1, NULL, 0, 0);
 }
 
-void CClientInstance :: Work_Term_SendFile(CMessage *const pMsg)
+void CClientInstance::Work_Term_SendFile(CMessage *const pMsg)
 {
     printf("100%%已传输\n");
     printf("文件上传完毕\n");
@@ -230,7 +237,7 @@ void CClientInstance :: Work_Term_SendFile(CMessage *const pMsg)
 /*
     终止状态下对各事件处理的选择
 */
-void CClientInstance :: Term_Function(CMessage *const pMsg)
+void CClientInstance::Term_Function(CMessage *const pMsg)
 {
     printE(pMsg->event);
     printf("输入'q'终结此次业务\n");
