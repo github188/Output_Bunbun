@@ -100,6 +100,9 @@ private:
     void Req_Term_TransInfo(CMessage *const pMsg);
     void Req_Timeout_TransInfo(CMessage *const pMsg);
 
+    void Work_Ack_TransInfo(CMessage *const pMsg);
+    void Work_Term_TransInfo(CMessage *const pMsg);
+
 /*====================================================================
         文件上传
 ====================================================================*/
@@ -119,6 +122,8 @@ private:
     void Req_Term_SendChar(CMessage *const pMsg);
     void Req_Timeout_SendChar(CMessage *const pMsg);
 
+    void Work_Ack_SendChar(CMessage *const pMsg);
+    void Work_Term_SendChar(CMessage *const pMsg);
 /*====================================================================
         用户退出，断开连接
 ====================================================================*/
@@ -136,6 +141,7 @@ private:
 ====================================================================*/
 private:
     void sendFile(CMessage *const pMsg);
+    void sendChar(CMessage *const pMsg);
 };
 
 

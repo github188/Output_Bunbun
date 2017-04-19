@@ -1,51 +1,52 @@
 #include "cltApp.h"
 
 struct ConnectInfo *g_pConnectInfo;
-
+CUserInfo *pCltUserInfo;
 void UserInterface()
 {
+    u16 byCmd;
     printf("-------------------------------------\n\
-            1.保留业务\n\
-            2.查看其他用户\n\
-            3.转发消息\n\
+            *1.保留业务\n\
+            *2.查看其他用户B\n\
+            *3.转发消息\n\
             4.群发消息\n\
-            5.发送文件\n\
-            *6.发送文字信息\n\
+            *5.发送文件B\n\
+            *6.发送文字信息B\n\
             *7.退出\n\
             *0.清屏\n-------------------------------------\n\
 Please intput your command:\n");
-    u16 byCmd;
-    scanf("%hd", &byCmd);
-    switch(byCmd)
-    {
-        case U_INVALID:
-            break;
-        case U_CATOTHERS:       
-            OspPost(MAKEIID(CLT_APP_NO, 1), U_CATOTHERS, 0, 0, 0, MAKEIID(CLT_APP_NO, 1), 0);
-            break;
-        case U_TRANSINFO:
-            break;
-        case U_TRANSALL:
-            break;
-        case U_SENDFILE:
-            OspPost(MAKEIID(CLT_APP_NO, 1), U_SENDFILE, 0, 0, 0, MAKEIID(CLT_APP_NO, 1), 0);
-            break;
-        case U_SENDCHAR:
-            OspPost(MAKEIID(CLT_APP_NO, 1), U_SENDCHAR, 0, 0, 0, MAKEIID(CLT_APP_NO, 1), 0);
-            break;
-        case U_DISCONNECT:
-            OspPost(MAKEIID(CLT_APP_NO, 1), U_DISCONNECT, 0, 0, 0, MAKEIID(CLT_APP_NO, 1), 0);
-            break;
-        case U_CLEAR:
-            system("cls");
-            UserInterface();
-            break;
-        default:
-            printf("不存在的指令\n");
-            UserInterface();
-            break;
-    }
 
+        scanf("%hd", &byCmd);
+        switch(byCmd)
+        {
+            case U_INVALID:
+                break;
+            case U_CATOTHERS:       
+                OspPost(MAKEIID(CLT_APP_NO, 1), U_CATOTHERS, 0, 0, 0, MAKEIID(CLT_APP_NO, 1), 0);
+                break;
+            case U_TRANSINFO:
+                OspPost(MAKEIID(CLT_APP_NO, 1), U_TRANSINFO, 0, 0, 0, MAKEIID(CLT_APP_NO, 1), 0);
+                break;
+            case U_TRANSALL:
+                break;
+            case U_SENDFILE:
+                OspPost(MAKEIID(CLT_APP_NO, 1), U_SENDFILE, 0, 0, 0, MAKEIID(CLT_APP_NO, 1), 0);
+                break;
+            case U_SENDCHAR:
+                OspPost(MAKEIID(CLT_APP_NO, 1), U_SENDCHAR, 0, 0, 0, MAKEIID(CLT_APP_NO, 1), 0);
+                break;
+            case U_DISCONNECT:
+                OspPost(MAKEIID(CLT_APP_NO, 1), U_DISCONNECT, 0, 0, 0, MAKEIID(CLT_APP_NO, 1), 0);
+                break;
+            case U_CLEAR:
+                system("cls");
+                UserInterface();
+                break;
+            default:
+                printf("不存在的指令\n");
+                UserInterface();
+                break;
+        }
 
 }
 
@@ -65,16 +66,18 @@ void UserInit()
 	    pchModuleName，模块名，该应用程序的名字；
     */
     
-
+    s32 dwNode;
     OspInit(false, 0, "client");         /* 初始化Osp, 在端口x启动Telnet */
-    OspCreateTcpNode(0, 6683); 
-    rtn = clt->CreateApp("CltApp1", 
+    printf("请输入监听节点号(基准6682) : \n");
+    scanf("%d", &dwNode);
+    OspCreateTcpNode(0, dwNode); 
+    rtn = clt->CreateApp("CltApp2", 
                         CLT_APP_NO, 
                         CLT_APP_PRI, 
                         CLT_APP_QUE_SIZE, 
                         CLT_APP_STK_SIZE);
 
-    clt->SetInstAlias(1, "Ins1", 5);
+    clt->SetInstAlias(1, "Ins2", 5);
 }
 
 int main()
@@ -83,7 +86,7 @@ int main()
     g_pConnectInfo = (struct ConnectInfo *)malloc(sizeof(struct ConnectInfo));
     g_pConnectInfo->pMsg = (CMessage *)malloc(sizeof(CMessage));
 
-    CUserInfo *pCltUserInfo = (CUerInfo *)malloc(sizeof(CUerInfo));
+    pCltUserInfo = (CUerInfo *)malloc(sizeof(CUerInfo));
     UserInit();
 
     s8 pbyAddr[IPSTR_MAX];
@@ -110,11 +113,11 @@ int main()
         Sleep(1000);
         exit(-1);
     } 
-    
-
+    //Sleep(200);
+    //UserInterface();
     while(1)
     {
         Sleep(1000);
-    };
+    }
     return 0;
 }

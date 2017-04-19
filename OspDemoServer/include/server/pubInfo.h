@@ -3,6 +3,16 @@
 
 
 /*====================================================================
+        公用的一些重要变量buf，大小限制
+====================================================================*/
+
+#define IPSTR_MAX 50                    //IP字串
+#define MAXINS 8                        //服务器实例最大连接数
+#define MAXFILENAME 50                  //文件名最大长度
+#define BUFFSIZE 1024                   //发送文件包buf最大限制
+#define MAXUSERNAME 32                  //用户名最大长度
+
+/*====================================================================
 定义块:
     1、OSP的消息类型是16字节整形，OSP用户定义的消息类型应该大于该基准值，
     该基准值之下是OSP保留消息号
@@ -50,12 +60,36 @@
 #define EVENT_TIMEOUT_CATOTHERS        (u16)(EVENT_T*2 + EVENT_TIMEOUT)
 
 /*====================================================================
+        转发消息相关定义
+====================================================================*/
+#define EVENT_REQ_TRANSINFO            (u16)(EVENT_T*3 + EVENT_REQ)
+#define EVENT_ACK_TRANSINFO            (u16)(EVENT_T*3 + EVENT_ACK)
+#define EVENT_TERM_TRANSINFO           (u16)(EVENT_T*3 + EVENT_TERM)
+#define EVENT_TIMEOUT_TRANSINFO        (u16)(EVENT_T*3 + EVENT_TIMEOUT)
+
+typedef struct CTransInfoBuffer
+{
+    s8 userName[MAXUSERNAME];
+    s8 content[BUFFSIZE];
+    s32 dwUserNum;                  //目的用户序号
+    s32 dwCurIns;                   //与当前用户连接的实例号
+
+}CTransInfoBuffer;
+/*====================================================================
         发送文件相关定义
 ====================================================================*/
 #define EVENT_REQ_SENDFILE             (u16)(EVENT_T*5 + EVENT_REQ)
 #define EVENT_ACK_SENDFILE             (u16)(EVENT_T*5 + EVENT_ACK)
 #define EVENT_TERM_SENDFILE            (u16)(EVENT_T*5 + EVENT_TERM)
 #define EVENT_TIMEOUT_SENDFILE         (u16)(EVENT_T*5 + EVENT_TIMEOUT)
+
+/*====================================================================
+        发送文字相关定义
+====================================================================*/
+#define EVENT_REQ_SENDCHAR             (u16)(EVENT_T*6 + EVENT_REQ)
+#define EVENT_ACK_SENDCHAR             (u16)(EVENT_T*6 + EVENT_ACK)
+#define EVENT_TERM_SENDCHAR            (u16)(EVENT_T*6 + EVENT_TERM)
+#define EVENT_TIMEOUT_SENDCHAR         (u16)(EVENT_T*6 + EVENT_TIMEOUT)
 
 /*====================================================================
         用户断开连接相关定义
@@ -75,19 +109,9 @@ typedef struct UserInfo
     s8 pByAlias[20];
     s32 dwNumber;
     s32 dwState;
+    s32 dwInsID;
 
 }UserInfo;
-
-
-/*====================================================================
-结构体名：OnLineUser
-功能：在线用户信息结构体
-====================================================================*/
-typedef struct  OnLineUser
-{
-    s8 *InsAlias;
-}OnLineUser;
-
 
 
 /*====================================================================
@@ -140,16 +164,6 @@ typedef struct  OnLineUser
 
 
 /*====================================================================
-        公用的一些重要变量buf，大小限制
-====================================================================*/
-
-#define IPSTR_MAX 50                    //IP字串
-#define MAXINS 8                        //服务器实例最大连接数
-#define MAXFILENAME 50                  //文件名最大长度
-#define BUFFSIZE 1024                   //发送文件包buf最大限制
-#define MAXUSERNAME 32                  //用户名最大长度
-
-/*====================================================================
 结构体名：CFileMessage
 功能：客户端及服务端交互文件时候所使用的文件的包
 ====================================================================*/
@@ -167,6 +181,8 @@ typedef struct CFileMessage
 结构体名：CUserInfo
 功能：客户端向服务器提供的个人信息包
 ====================================================================*/
+#define ONLINE      (u16)(1)
+#define OFFLINE     (u16)(0)
 typedef struct  CUserInfo
 {
     s8 username[MAXUSERNAME];

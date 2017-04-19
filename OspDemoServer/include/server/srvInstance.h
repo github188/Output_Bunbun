@@ -2,7 +2,7 @@
 #define _SRVINSTANCE_H_
 #include "osp.h"
 #include "pubInfo.h"
-
+#include "transInfo.h"
 
 
 /*
@@ -21,8 +21,14 @@ public:
     CServerInstance();
 
 private:
-    UserInfo m_pUserInfo[MAXINS];
-    s32 m_dwCurInsNum;
+/*====================================================================
+        理论上来说，DaemonIns和普通Ins是有区分的，由于用户手册的设计
+    与限制，本Demo对DaemonIns和普通Ins在声明与实现上是一个类型，无区别，
+    只是在他们的执行上做一些区分
+====================================================================*/
+    UserInfo m_pUserInfo[MAXINS];       //DaemonIns用来保存在线的客户信息
+    UserInfo m_pCurUser;                //普通Ins存放当前相连的用户信息
+    s32 m_dwCurInsNum;                  //DaemonIns存放当前已连接的用户数
 private:
     virtual void DaemonInstanceEntry( CMessage *const pMsg, CApp *pApp);
     virtual void InstanceEntry(CMessage *const pMsg);
@@ -47,7 +53,11 @@ private:
 
     void Ack_Req_CatOthers(CMessage *const pMsg);
 
+    void Ack_Req_TransInfo(CMessage *const pMsg);
+
     void Ack_Req_SendFile(CMessage *const pMsg); 
+
+    void Ack_Req_SendChar(CMessage *const pMsg);
 
     void Ack_Req_DisConnect(CMessage *const pMsg);
 
@@ -56,8 +66,11 @@ private:
     /*Work状态*/
     virtual void Work_Function(CMessage *const pMsg);
     void Work_Ack_SendFile(CMessage *const pMsg);
+    void Work_Ack_SendChar(CMessage *const pMsg);
     void Work_Term_CatOthers(CMessage *const pMsg);
+    void Work_Term_TransInfo(CMessage *const pMsg);
     void Work_Term_SendFile(CMessage *const pMsg);
+    void Work_Term_SendChar(CMessage *const pMsg);
 
     /*Term状态*/
     virtual void Term_Function(CMessage *const pMsg);
@@ -65,7 +78,9 @@ private:
 
 private:
     void catOthers(CMessage *const pMsg);
+    void transInfo(CMessage *const pMsg);
     void rcvFile(CMessage *const pMsg);
+    void rcvChar(CMessage *const pMsg);
 
 
     
