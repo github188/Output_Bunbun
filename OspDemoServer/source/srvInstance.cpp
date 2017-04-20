@@ -35,25 +35,46 @@ CServerInstance::CServerInstance()
 
 void CServerInstance::DaemonInstanceEntry(CMessage *const  pMsg, CApp * pApp)
 {
+    CSUserInfo *cSUer = new CSUserInfo;
+    cSUer->pMsg = new CMessage;
     u16 wCurEvent = pMsg->event;
+    u16 wFlag = 0;              //该用户是否是重连用户
     if(EVENT_REQ_INSCONNECT == pMsg->event)
     {
-        if(m_dwCurInsNum <= MAXINS) //记录连接的用户信息
+        for(s32 i = 0; i < MAXINS; i++)
         {
-            
-            m_pUserInfo[m_dwCurInsNum].pMsg = (CMessage *)malloc(sizeof(CMessage));
-            memcpy(m_pUserInfo[m_dwCurInsNum].pMsg, pMsg, sizeof(CMessage));
-            m_pUserInfo[m_dwCurInsNum].dwNumber = m_dwCurInsNum + 1;
-            m_pUserInfo[m_dwCurInsNum].dwState = 1;
-            strcpy(m_pUserInfo[m_dwCurInsNum].pByAlias, (s8*)pMsg->content);
-            OspPost(MAKEIID(GetAppID(), m_dwCurInsNum + 1), EVENT_REQ_INSCONNECT, pMsg, sizeof(CMessage), 0);
-            m_dwCurInsNum++;
-           
+            if(!strcmp(m_pUserInfo[i].pByAlias, (s8*)pMsg->content))
+            {
+                m_pUserInfo[i].dwState = 1;
+                wFlag = 1;
+                cSUer->wFlag = 1;
+                OspPost(MAKEIID(GetAppID(), i + 1), EVENT_REQ_INSCONNECT, pMsg, sizeof(CMessage), 0);
+                break;
+            }
+        
+        }
+        if(wFlag)
+        {
+            //OspPost(MAKEIID(GetAppID(), m_dwCurInsNum + 1), EVENT_REQ_INSCONNECT, pMsg, sizeof(CMessage), 0);
         }
         else
         {
-            printf("服务器正忙（用户连接数超过最大限制），稍后再试(未实现)\n");
+            if(m_dwCurInsNum <= MAXINS) //记录连接的用户信息
+            {
+                m_pUserInfo[m_dwCurInsNum].pMsg = (CMessage *)malloc(sizeof(CMessage));
+                memcpy(m_pUserInfo[m_dwCurInsNum].pMsg, pMsg, sizeof(CMessage));
+                m_pUserInfo[m_dwCurInsNum].dwNumber = m_dwCurInsNum + 1;
+                m_pUserInfo[m_dwCurInsNum].dwState = 1;
+                strcpy(m_pUserInfo[m_dwCurInsNum].pByAlias, (s8*)pMsg->content);
+                OspPost(MAKEIID(GetAppID(), m_dwCurInsNum + 1), EVENT_REQ_INSCONNECT, pMsg, sizeof(CMessage), 0);
+                m_dwCurInsNum++;
+           
+            }
+            else
+            {
+                printf("服务器正忙（用户连接数超过最大限制），稍后再试(未实现)\n");
         
+            }
         }
     }
     else if(EVENT_REQ_CATOTHERS == wCurEvent)
@@ -84,6 +105,10 @@ void CServerInstance::DaemonInstanceEntry(CMessage *const  pMsg, CApp * pApp)
        //告知实例，一次业务结束
         OspPost(MAKEIID(GetAppID() , ((CTransInfoBuffer *)pMsg->content)->dwCurIns), EVENT_TERM_TRANSINFO, NULL, 0, 0, 
             MAKEIID(GetAppID(), GetInsID()));
+    }
+    else if(OSP_DISCONNECT == wCurEvent)
+    {
+        //printf("用户%s异常断开\n", pMsg->);
     }
 }
 
@@ -155,18 +180,47 @@ void CServerInstance::Idle_Function(CMessage *const pMsg)
 */
 void CServerInstance::Idle_Req_InsConnect(CMessage *const pMsg)
 {
-    
-    m_pCurUser.dwState = ONLINE;
-    strcpy(m_pCurUser.pByAlias, (s8 *)((CMessage *)pMsg->content)->content);
-    m_pCurUser.pMsg = (CMessage *)malloc(sizeof(CMessage));
-    memcpy(m_pCurUser.pMsg, (CMessage *)pMsg->content, sizeof(CMessage));
+    /*记录与该实例连接的客户端信息*/
+    if(m_pCurUser.dwState == 1)     //该用户原本已存在
+    {
+        m_pCurUser.dwState = ONLINE;
+        strcpy(m_pCurUser.pByAlias, (s8 *)((CMessage *)pMsg->content)->content);
+        m_pCurUser.pMsg = (CMessage *)malloc(sizeof(CMessage));
+        memcpy(m_pCurUser.pMsg, (CMessage *)pMsg->content, sizeof(CMessage));
 
-    printf("用户 %s 已连接!\n", m_pCurUser.pByAlias);
-    //printf("%d\n", GETINS(((CMessage *)pMsg->content)->srcid));
-    OspPost(((CMessage *)pMsg->content)->srcid, EVENT_ACK_INSCONNECT, NULL, 0, ((CMessage *)pMsg->content)->srcnode, 
-        MAKEIID(this->GetAppID(), this->GetInsID()));
-    printf("服务器实例%d已进入ACK状态\n", GetInsID());
-    NextState(S_STATE_ACK);
+        /*设置断链检测*/
+        OspSetHBParam(m_pCurUser.pMsg->srcnode, 2, 2);
+
+        /*断链时通知Daemon*/
+        OspNodeDiscCBReg(m_pCurUser.pMsg->srcnode, GetAppID(), GetInsID());
+        
+        printf("用户 %s 已重连!\n", m_pCurUser.pByAlias);
+
+        OspPost(((CMessage *)pMsg->content)->srcid, EVENT_ACK_INSCONNECT, &m_Rcd, sizeof(m_Rcd), ((CMessage *)pMsg->content)->srcnode, 
+            MAKEIID(this->GetAppID(), this->GetInsID()));
+    }
+    else
+    {
+        m_pCurUser.dwState = ONLINE;
+        strcpy(m_pCurUser.pByAlias, (s8 *)((CMessage *)pMsg->content)->content);
+        m_pCurUser.pMsg = (CMessage *)malloc(sizeof(CMessage));
+        memcpy(m_pCurUser.pMsg, (CMessage *)pMsg->content, sizeof(CMessage));
+
+        /*设置断链检测*/
+        OspSetHBParam(m_pCurUser.pMsg->srcnode, 2, 2);
+
+        /*断链时通知Daemon*/
+        OspNodeDiscCBReg(m_pCurUser.pMsg->srcnode, GetAppID(), GetInsID());
+
+        /*记录用户名*/
+        strcpy(m_Rcd.pUsername, m_pCurUser.pByAlias);
+
+        printf("用户 %s 已连接!\n", m_pCurUser.pByAlias);
+        OspPost(((CMessage *)pMsg->content)->srcid, EVENT_ACK_INSCONNECT, NULL, 0, ((CMessage *)pMsg->content)->srcnode, 
+            MAKEIID(this->GetAppID(), this->GetInsID()));
+        printf("服务器实例%d已进入ACK状态\n", GetInsID());
+        NextState(S_STATE_ACK);
+    }
 }
 
 void CServerInstance::Idle_Ack_InsConnect(CMessage *const pMsg)
@@ -238,9 +292,25 @@ void CServerInstance::Ack_Ack_DisConnect(CMessage *const pMsg)
 void CServerInstance::Work_Function(CMessage *const pMsg)
 {
     u16 wCurEvent = pMsg->event;
-    u16 wCurEventMain = GetMain(wCurEvent);
-    u16 wCurEventBran = GetBran(wCurEvent);
-    (this->*WorkEventFunction[wCurEventMain][wCurEventBran])(pMsg);
+    if(wCurEvent < OSP_USEREVENT_BASE)
+    {
+        switch (wCurEvent)
+        {
+            case OSP_DISCONNECT:
+            {
+                Work_OspDisConnect(pMsg);
+                break;
+            }
+            default:
+                break;
+        }
+    }
+    else
+    {
+        u16 wCurEventMain = GetMain(wCurEvent);
+        u16 wCurEventBran = GetBran(wCurEvent);
+        (this->*WorkEventFunction[wCurEventMain][wCurEventBran])(pMsg);
+    }
 }
 
 void CServerInstance::Work_Term_CatOthers(CMessage *const pMsg)
@@ -274,6 +344,17 @@ void CServerInstance::Work_Term_SendFile(CMessage *const pMsg)
     NextState(S_STATE_TERM);
     OspPost(MAKEIID(GetAppID(), GetInsID()), 1, NULL, 0, 0, 0);
 }
+
+void CServerInstance::Work_OspDisConnect(CMessage *const pMsg)
+{
+    printf("客户端异常断开了,保存断链信息\n");
+    saveDisConnectInfo();
+    printf("服务器实例%d进入空闲状态\n", GetInsID());
+    NextState(S_STATE_IDLE);
+    //OspPost(MAKEIID(GetAppID(), GetInsID()), 1, NULL, 0, 0, 0);
+
+}
+
 
 void CServerInstance::Work_Term_SendChar(CMessage *const pMsg)
 {

@@ -4,50 +4,55 @@ void CClientInstance::sendFile(CMessage *const pMsg)
 {
     CFileMessage *pFMsg = (CFileMessage *)malloc(sizeof(CFileMessage));
     s8 pFilePath[MAXFILENAME];
-    if(NULL == pMsg->content)
+    if(!fp)                    //第一次上传交互，初始文件信息
     {
-        printf("请输入需要传送的文件的路径:\n");
-        scanf("%s", pFilePath);
-        strcpy(pFMsg->pFilePath, pFilePath);
-        strcpy(pFMsg->pFileName, GetFileName(pFilePath));
-        pFMsg->curLocal = 1;
-        fp = fopen(pFilePath, "rb");
-        if(!fp)
+        if(!(pMsg->content))        //第一次正常上传
         {
-            printf("打开文件出错\n");
+            printf("请输入需要传送的文件的路径:\n");
+            scanf("%s", pFilePath);
+            strcpy(pFMsg->pFilePath, pFilePath);
+            strcpy(pFMsg->pFileName, GetFileName(pFilePath));
+            pFMsg->curLocal = 1;
+            fp = fopen(pFilePath, "rb");
+            if(!fp)
+            {
+                printf("打开文件出错\n");
+            }
+            else
+            {
+           /*获取文件大小*/
+                fseek(fp, 0, SEEK_END);
+                pFMsg->fileSize = ftell(fp);
+                printf("filesize : %d\n", pFMsg->fileSize);
+                fseek(fp, 0, SEEK_SET);
+            }
         }
-        else
+        else                //第一次续传
         {
-       /*
-             获取文件大小
-        */
-            printf("fp = %d\n", fp);
-            fseek(fp, 0, SEEK_END);
-            pFMsg->fileSize = ftell(fp);
-            printf("filesize : %d\n", pFMsg->fileSize);
-            fseek(fp, 0, SEEK_SET);
+            printf("第一次续传\n");
+            pFMsg->curLocal = ((CRcdInfo *)pMsg->content)->dwAldRcdSeek;
+            strcpy(pFMsg->pFilePath, ((CRcdInfo *)pMsg->content)->fMsg.pFilePath);
+
         }
+ 
     }
-    else
+    else    //打印上传文件的进度
     {
 
         pFMsg->curLocal = ((CFileMessage *)pMsg->content)->curLocal;
         pFMsg->fileSize = ((CFileMessage *)pMsg->content)->fileSize;
         strcpy(pFMsg->pFilePath, ((CFileMessage *)pMsg->content)->pFilePath);
         strcpy(pFMsg->pFileName, ((CFileMessage *)pMsg->content)->pFileName);
-        //pFMsg->curLocal = ((CFileMessage *)pMsg->content)->curLocal + 1;    //当前文件定位
-        //printf("curlocal:%I64u filesize:%I64u\n", ((CFileMessage *)pMsg->content)->curLocal, ((CFileMessage *)pMsg->content)->fileSize);
-        //printf("curlocal:%I64u filesize:%I64u\n", pFMsg->curLocal, pFMsg->fileSize);
         printf("%.2f%%已传输\n", ((float)pFMsg->curLocal)/((float)pFMsg->fileSize/BUFFSIZE)*100);
         pFMsg->curLocal++;
         
     }
     
-    if(fp)
+    if(fp)  //文件打开成功
     {
         
-        pFMsg->curBufSize = pFMsg->fileSize - (pFMsg->curLocal - 1)*BUFFSIZE;
-        if(BUFFSIZE*pFMsg->curLocal >= pFMsg->fileSize)
+        pFMsg->curBufSize = pFMsg->fileSize - (pFMsg->curLocal - 1)*BUFFSIZE;   //记录本次上传包的大小
+        if(BUFFSIZE*pFMsg->curLocal >= pFMsg->fileSize)         //最后一次上传
         {
             if(fread(pFMsg->pBuf, pFMsg->curBufSize, 1, fp) <= 1)
             {

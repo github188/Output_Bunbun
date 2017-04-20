@@ -86,15 +86,12 @@ void CClientInstance::InstanceEntry(CMessage *const pMsg)
             break;
         case C_STATE_CONNECT:
             Connect_Function(pMsg);
-            
-            //SetTimer(EVENT_TIMEOUT, 1000);
             break;
         case C_STATE_REQ:
             Req_Function(pMsg);
             break;
         case C_STATE_WORK:
             Work_Function(pMsg);
-            
             break;
         case C_STATE_TERM:
             Term_Function(pMsg);
@@ -111,11 +108,27 @@ void CClientInstance::InstanceEntry(CMessage *const pMsg)
 */
 void CClientInstance::Idle_Function(CMessage *const pMsg)
 {
-    printE(pMsg->event);
+    //printE(pMsg->event);
     u16 wCurEvent = pMsg->event;
-    u16 wCurEventMain = GetMain(wCurEvent);
-    u16 wCurEventBran = GetBran(wCurEvent);
-    (this->*IdleEventFunction[wCurEventMain][wCurEventBran])(pMsg);
+    if(wCurEvent < OSP_USEREVENT_BASE) //小于基准事件就是系统事件
+    {
+        switch(wCurEvent)
+        {
+            case OSP_DISCONNECT:
+            {
+                //未实现
+            }
+            
+        
+        }
+    }
+    else                               //大于基准事件就是用户自定义事件
+    {
+        u16 wCurEventMain = GetMain(wCurEvent);
+        u16 wCurEventBran = GetBran(wCurEvent);
+        (this->*IdleEventFunction[wCurEventMain][wCurEventBran])(pMsg);
+    }
+    
 
 }
 
@@ -127,8 +140,7 @@ void CClientInstance::Idle_Req_InsConnect(CMessage *const pMsg)
     rtn = OspPost(MAKEIID(SRV_APP_NO, CClientInstance::DAEMON), EVENT_REQ_INSCONNECT, ((CUerInfo *)pMsg->content)->username, 
         sizeof(((CUerInfo *)pMsg->content)->username), g_pConnectInfo->dstnode, MAKEIID(CLT_APP_NO, 1));
     if(0 == rtn)
-    {
-        
+    {       
         printf("向服务器发送连接实例请求成功\n");
     }
     else
@@ -143,15 +155,61 @@ void CClientInstance::Idle_Req_InsConnect(CMessage *const pMsg)
 void CClientInstance::Idle_Ack_InsConnect(CMessage *const pMsg)
 {
    
-    if(!(pMsg->content))
+    if(!(pMsg->content))    //第一次连接，记录连接信息
     {
         memcpy(g_pConnectInfo->pMsg, pMsg, sizeof(CMessage));
         printf("已连接至服务器实例,");
     }
-    printf("进入连接状态\n");
-    NextState(C_STATE_CONNECT);
-    OspTaskCreate(UserInterface, "userInterface", 100, 200<<10, 0, 0);
-    
+
+    if(!(pMsg->content) || !strcmp("local", (s8 *)pMsg->content))
+    {
+        printf("进入连接状态\n");
+        NextState(C_STATE_CONNECT);
+        OspTaskCreate(UserInterface, "userInterface", 100, 200<<10, 0, 0);
+    }
+    else if(pMsg->content)//重连响应注册
+    {
+        printf("已重连服务器\n");
+        if(!(((CRcdInfo *)pMsg->content)->bFinish)) //上次传送未完成
+        {
+            printf("是否续传上次的文件(y/n)?\n");
+            bool bCmd;
+            s8 c;
+            while(c = getchar())
+            {
+                if('y' == c)
+                {
+                    bCmd = true;
+                    break;
+                }
+                else if('n' == c)
+                {
+                    bCmd = false;
+                    break;
+                }
+                else
+                {
+                    printf("输入正确的指令\n");
+                }
+            
+            }
+            if(bCmd)            //选择续传
+            {
+                printf("进入工作状态\n");
+                NextState(C_STATE_WORK);
+                OspPost(MAKEIID(GetAppID(), GetInsID()), EVENT_ACK_SENDFILE, pMsg->content, sizeof(CRcdInfo), 0, 0);
+                          
+            }
+            else
+            {
+                printf("进入空闲状态\n");
+                NextState(C_STATE_IDLE);
+                OspPost(MAKEIID(GetAppID(),GetInsID()), EVENT_ACK_INSCONNECT, "local", 6, 0, MAKEIID(GetAppID(),GetInsID()));
+            }
+        
+        }
+
+    }
 }
 
 void CClientInstance::Idle_Term_InsConnect(CMessage *const pMsg)
@@ -170,7 +228,7 @@ void CClientInstance::Idle_Timeout_InsConnect(CMessage *const pMsg)
 void CClientInstance::Connect_Function(CMessage *const pMsg)
 {
     u16 wCurEvent = pMsg->event;
-    if(wCurEvent < 10)
+    if(!strcmp((s8 *)pMsg->content, "user"))
     {
         printf("该消息是用户自定义的消息%hd\n", wCurEvent);
         
@@ -181,9 +239,24 @@ void CClientInstance::Connect_Function(CMessage *const pMsg)
     }
     else
     {
-        u16 wCurEventMain = GetMain(wCurEvent);
-        u16 wCurEventBran = GetBran(wCurEvent);
-        (this->*ConnectEventFunction[wCurEventMain][wCurEventBran])(pMsg);
+        if(wCurEvent < OSP_USEREVENT_BASE)
+        {
+            switch(wCurEvent)
+            {
+                case OSP_DISCONNECT:
+                    printf("与服务器发生断链，进入空闲状态\n");
+                    NextState(C_STATE_IDLE);
+                    break;
+                default:
+                    break;
+            }
+        }
+        else
+        {
+            u16 wCurEventMain = GetMain(wCurEvent);
+            u16 wCurEventBran = GetBran(wCurEvent);
+            (this->*ConnectEventFunction[wCurEventMain][wCurEventBran])(pMsg);
+        }
     }
 }
 

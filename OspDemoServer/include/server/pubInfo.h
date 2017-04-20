@@ -6,12 +6,12 @@
         公用的一些重要变量buf，大小限制
 ====================================================================*/
 
-#define IPSTR_MAX 50                    //IP字串
-#define MAXINS 8                        //服务器实例最大连接数
+#define IPSTR_MAX   50                  //IP字串
+#define MAXINS      8                   //服务器实例最大连接数
 #define MAXFILENAME 50                  //文件名最大长度
-#define BUFFSIZE 1024                   //发送文件包buf最大限制
+#define BUFFSIZE    1024                //发送文件包buf最大限制
 #define MAXUSERNAME 32                  //用户名最大长度
-
+#define MD5SIZE     65                  //摘要后的MD5最长长度
 /*====================================================================
 定义块:
     1、OSP的消息类型是16字节整形，OSP用户定义的消息类型应该大于该基准值，
@@ -178,6 +178,18 @@ typedef struct CFileMessage
 }CFileMessage;
 
 /*====================================================================
+结构体名：CRcdInfo
+功能：客户端和服务器存放文件交互信息
+====================================================================*/
+typedef struct CRcdInfo
+{
+    s32 dwAldRcdSeek;
+    s8 pMD5[MD5SIZE];
+    s8 pUsername[MAXUSERNAME];
+    CFileMessage fMsg;
+    bool bFinish;
+}CRcdInfo;
+/*====================================================================
 结构体名：CUserInfo
 功能：客户端向服务器提供的个人信息包
 ====================================================================*/
@@ -190,7 +202,15 @@ typedef struct  CUserInfo
 
 }CUerInfo;
 
-
+/*====================================================================
+结构体名：CSUserInfo
+功能：服务器内部注册用户信息的包
+====================================================================*/
+typedef struct CSUserInfo
+{
+    CMessage *pMsg;
+    u16 wFlag;
+}CSUserInfo;
 
 
 
