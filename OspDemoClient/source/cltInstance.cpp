@@ -170,6 +170,10 @@ void CClientInstance::Idle_Ack_InsConnect(CMessage *const pMsg)
     else if(pMsg->content)//重连响应注册
     {
         printf("已重连服务器\n");
+
+        g_pConnectInfo->pMsg->srcid = pMsg->srcid;
+        g_pConnectInfo->pMsg->srcnode = pMsg->srcnode;
+
         if(!(((CRcdInfo *)pMsg->content)->bFinish)) //上次传送未完成
         {
             printf("是否续传上次的文件(y/n)?\n");

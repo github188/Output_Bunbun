@@ -10,34 +10,73 @@
 #endif
 void CServerInstance::rcvFile(CMessage *const pMsg)
 {
-    
-    if(1 == ((CFileMessage *)pMsg->content)->curLocal)  //第一次接收，记录文件信息
+
+    if(!fp)     //第一次接收
     {
-        pFMsg = (CFileMessage *)malloc(sizeof(CFileMessage));
-        pFMsg->fileSize = ((CFileMessage *)pMsg->content)->fileSize;
-        strcpy(pFMsg->pFilePath, ((CFileMessage *)pMsg->content)->pFilePath);
-        strcpy(pFMsg->pFileName, ((CFileMessage *)pMsg->content)->pFileName);
-       
-        strcpy(pFilePath, "C:\\Users\\Reisen\\Desktop\\test\\");
-        strcpy(pRcdFilePath, "C:\\Users\\Reisen\\Desktop\\test\\");
+        if(1 == ((CFileMessage *)pMsg->content)->curLocal)  //第一次正常接收，记录文件信息
+        {
+            pFMsg = (CFileMessage *)malloc(sizeof(CFileMessage));
+            pFMsg->fileSize = ((CFileMessage *)pMsg->content)->fileSize;
+            strcpy(pFMsg->pFilePath, ((CFileMessage *)pMsg->content)->pFilePath);
+            strcpy(pFMsg->pFileName, ((CFileMessage *)pMsg->content)->pFileName);
 
-        strcat(pFilePath, m_pCurUser.pByAlias);
-        strcat(pRcdFilePath, m_pCurUser.pByAlias);
-        strcpy(m_Rcd.pUsername, m_pCurUser.pByAlias);
+            m_Rcd.fMsg.fileSize = pFMsg->fileSize;//记录上传文件的客户机
+            strcpy(m_Rcd.fMsg.pFileName, ((CFileMessage *)pMsg->content)->pFileName);
+            strcpy(m_Rcd.fMsg.pFilePath, pFMsg->pFilePath);
+
+            strcpy(pFilePath, "C:\\Users\\Reisen\\Desktop\\test\\");
+            strcpy(pRcdFilePath, "C:\\Users\\Reisen\\Desktop\\test\\");
+
+            strcat(pFilePath, m_pCurUser.pByAlias);
+            strcat(pRcdFilePath, m_pCurUser.pByAlias);
+            strcpy(m_Rcd.pUsername, m_pCurUser.pByAlias);
         
-        m_Rcd.bFinish = false;  //记录状态未完成上传
+            m_Rcd.bFinish = false;  //记录状态未完成上传
 
-        createUserFile(pFilePath, pRcdFilePath);
-        strcat(pFilePath, "\\");
-        strcat(pFilePath, ((CFileMessage*)pMsg->content)->pFileName);
-        printf("%s\n", pFilePath);
+            createUserFile(pFilePath, pRcdFilePath);
+            strcat(pFilePath, "\\");
+            strcat(pFilePath, ((CFileMessage*)pMsg->content)->pFileName);
+            printf("%s\n", pFilePath);
 
-        strcpy(m_Rcd.fMsg.pFilePath, pFilePath);//记录上传文件的客户机路径
+            
 
-        fp = fopen(pFilePath, "wb");
-        fpRcd = fopen(strcat(pRcdFilePath, "\\rcdInfo"), "wb");
-        fclose(fpRcd);
+            fp = fopen(pFilePath, "wb");
+            fpRcd = fopen(strcat(pRcdFilePath, "\\rcdInfo"), "wb");
+            fclose(fpRcd);
+        }
+        else                //第一次重连接收
+        {
+            pFMsg = (CFileMessage *)malloc(sizeof(CFileMessage));
+            pFMsg->fileSize = ((CFileMessage *)pMsg->content)->fileSize;
+            strcpy(pFMsg->pFilePath, ((CFileMessage *)pMsg->content)->pFilePath);
+            strcpy(pFMsg->pFileName, ((CFileMessage *)pMsg->content)->pFileName);
+       
+            strcpy(pFilePath, "C:\\Users\\Reisen\\Desktop\\test\\");
+            strcpy(pRcdFilePath, "C:\\Users\\Reisen\\Desktop\\test\\");
+
+            strcat(pFilePath, m_pCurUser.pByAlias);
+            strcat(pRcdFilePath, m_pCurUser.pByAlias);
+            strcpy(m_Rcd.pUsername, m_pCurUser.pByAlias);
+        
+            m_Rcd.bFinish = false;  //记录状态未完成上传
+
+            createUserFile(pFilePath, pRcdFilePath);
+            strcat(pFilePath, "\\");
+            strcat(pFilePath, ((CFileMessage*)pMsg->content)->pFileName);
+            printf("%s\n", pFilePath);
+
+            strcpy(m_Rcd.fMsg.pFilePath, pFilePath);//记录上传文件的客户机路径
+
+            fp = fopen(pFilePath, "wb");
+            fseek(fp, BUFFSIZE*((CFileMessage *)pMsg->content)->curLocal, SEEK_SET);
+            fpRcd = fopen(strcat(pRcdFilePath, "\\rcdInfo"), "wb");
+            fclose(fpRcd);
+
+            
+        }
     }
+    
+    
     pFMsg->curLocal = ((CFileMessage *)pMsg->content)->curLocal;
     pFMsg->curBufSize = ((CFileMessage *)pMsg->content)->curBufSize;
 

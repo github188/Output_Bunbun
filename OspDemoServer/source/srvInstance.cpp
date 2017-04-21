@@ -198,6 +198,9 @@ void CServerInstance::Idle_Req_InsConnect(CMessage *const pMsg)
 
         OspPost(((CMessage *)pMsg->content)->srcid, EVENT_ACK_INSCONNECT, &m_Rcd, sizeof(m_Rcd), ((CMessage *)pMsg->content)->srcnode, 
             MAKEIID(this->GetAppID(), this->GetInsID()));
+
+        printf("进入工作状态\n");
+        NextState(S_STATE_WORK);
     }
     else
     {

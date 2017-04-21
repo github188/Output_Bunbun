@@ -6,4 +6,5 @@ s8 SENDBUFF[BUFFSIZE];
 
 s8 *GetFileName(s8 []);
 FILE *fp = NULL;
+CFileMessage *pFMsg = NULL;
 #endif

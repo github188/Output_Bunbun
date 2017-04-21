@@ -2,10 +2,11 @@
 #include "md5.h"
 void CClientInstance::sendFile(CMessage *const pMsg)
 {
-    CFileMessage *pFMsg = (CFileMessage *)malloc(sizeof(CFileMessage));
+    
     s8 pFilePath[MAXFILENAME];
     if(!fp)                    //第一次上传交互，初始文件信息
     {
+        pFMsg = (CFileMessage *)malloc(sizeof(CFileMessage));
         if(!(pMsg->content))        //第一次正常上传
         {
             printf("请输入需要传送的文件的路径:\n");
@@ -32,6 +33,12 @@ void CClientInstance::sendFile(CMessage *const pMsg)
             printf("第一次续传\n");
             pFMsg->curLocal = ((CRcdInfo *)pMsg->content)->dwAldRcdSeek;
             strcpy(pFMsg->pFilePath, ((CRcdInfo *)pMsg->content)->fMsg.pFilePath);
+            strcpy(pFMsg->pFileName, ((CRcdInfo *)pMsg->content)->fMsg.pFileName);
+            pFMsg->fileSize = ((CRcdInfo *)pMsg->content)->fMsg.fileSize;
+            printf("filesize = %d\n", pFMsg->fileSize);
+            fp = fopen(pFMsg->pFilePath, "rb");
+            fseek(fp, BUFFSIZE*pFMsg->curLocal, SEEK_SET);
+            pFMsg->curLocal++;
 
         }
  
@@ -58,7 +65,7 @@ void CClientInstance::sendFile(CMessage *const pMsg)
             {
                 
                 OspPost(g_pConnectInfo->pMsg->srcid, EVENT_ACK_SENDFILE, pFMsg, sizeof(CFileMessage), g_pConnectInfo->pMsg->srcnode,\
-                    g_pConnectInfo->pMsg->dstid);
+                    MAKEIID(GetAppID(), GetInsID()));
                 fclose(fp);
                 
             } 
@@ -68,9 +75,9 @@ void CClientInstance::sendFile(CMessage *const pMsg)
             pFMsg->curBufSize = BUFFSIZE;
             if(fread(pFMsg->pBuf, BUFFSIZE, 1, fp) <= 1)
             {
-               
+              
                 OspPost(g_pConnectInfo->pMsg->srcid, EVENT_ACK_SENDFILE, pFMsg, sizeof(CFileMessage), g_pConnectInfo->pMsg->srcnode,\
-                    g_pConnectInfo->pMsg->dstid);
+                    MAKEIID(GetAppID(), GetInsID()));
             }
         }
     
