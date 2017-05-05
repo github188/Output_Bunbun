@@ -1,111 +1,116 @@
-#include "sendFile.h"
-#include "md5.h"
-void CClientInstance::sendFile(CMessage *const pMsg)
+#include "cltInstance.h"
+
+static s8 SENDBUFF[BUFFSIZE];
+static s8 *GetFileName(s8 []);
+static FILE *s_fp = NULL;
+static CFileMessage *s_tfMsg = NULL;
+
+
+void CClientInstance::SendFile(CMessage *const pMsg)
 {
     
-    s8 pFilePath[MAXFILENAME];
-    if(!fp)                    //第一次上传交互，初始文件信息
+    s8 m_achFilePath[MAXFILENAME];
+    if (!s_fp)                    /* 第一次上传交互，初始文件信息 */
     {
-        pFMsg = (CFileMessage *)malloc(sizeof(CFileMessage));
-        if(!(pMsg->content))        //第一次正常上传
+        s_tfMsg = (CFileMessage *)malloc(sizeof(CFileMessage));
+        if (!(pMsg->content))        /* 第一次正常上传 */
         {
             printf("请输入需要传送的文件的路径:\n");
-            scanf("%s", pFilePath);
-            strcpy(pFMsg->pFilePath, pFilePath);
-            strcpy(pFMsg->pFileName, GetFileName(pFilePath));
-            pFMsg->curLocal = 1;
-            fp = fopen(pFilePath, "rb");
-            if(!fp)
+            scanf("%s", m_achFilePath);
+            strcpy(s_tfMsg->m_achFilePath, m_achFilePath);
+            strcpy(s_tfMsg->m_achFileName, GetFileName(m_achFilePath));
+            s_tfMsg->m_curLocal = 1;
+            s_fp = fopen(m_achFilePath, "rb");
+            if (!s_fp)
             {
                 printf("打开文件出错\n");
             }
             else
             {
-           /*获取文件大小*/
-                fseek(fp, 0, SEEK_END);
-                pFMsg->fileSize = ftell(fp);
-                printf("filesize : %d\n", pFMsg->fileSize);
-                fseek(fp, 0, SEEK_SET);
+                /* 获取文件大小 */
+                fseek(s_fp, 0, SEEK_END);
+                s_tfMsg->m_fileSize = ftell(s_fp);
+                printf("m_fileSize : %d\n", s_tfMsg->m_fileSize);
+                fseek(s_fp, 0, SEEK_SET);
             }
         }
-        else                //第一次续传
+        else                /* 第一次续传 */
         {
             printf("第一次续传\n");
-            pFMsg->curLocal = ((CRcdInfo *)pMsg->content)->dwAldRcdSeek;
-            strcpy(pFMsg->pFilePath, ((CRcdInfo *)pMsg->content)->fMsg.pFilePath);
-            strcpy(pFMsg->pFileName, ((CRcdInfo *)pMsg->content)->fMsg.pFileName);
-            pFMsg->fileSize = ((CRcdInfo *)pMsg->content)->fMsg.fileSize;
-            printf("filesize = %d\n", pFMsg->fileSize);
-            fp = fopen(pFMsg->pFilePath, "rb");
-            fseek(fp, BUFFSIZE*pFMsg->curLocal, SEEK_SET);
-            pFMsg->curLocal++;
+            s_tfMsg->m_curLocal = ((CRcdInfo *)pMsg->content)->m_nAldRcdSeek;
+            strcpy(s_tfMsg->m_achFilePath, ((CRcdInfo *)pMsg->content)->m_tfMsg.m_achFilePath);
+            strcpy(s_tfMsg->m_achFileName, ((CRcdInfo *)pMsg->content)->m_tfMsg.m_achFileName);
+            s_tfMsg->m_fileSize = ((CRcdInfo *)pMsg->content)->m_tfMsg.m_fileSize;
+            printf("m_fileSize = %d\n", s_tfMsg->m_fileSize);
+            s_fp = fopen(s_tfMsg->m_achFilePath, "rb");
+            fseek(s_fp, BUFFSIZE*s_tfMsg->m_curLocal, SEEK_SET);
+            s_tfMsg->m_curLocal++;
 
         }
- 
     }
-    else    //打印上传文件的进度
+    else    /* 打印上传文件的进度 */
     {
 
-        pFMsg->curLocal = ((CFileMessage *)pMsg->content)->curLocal;
-        pFMsg->fileSize = ((CFileMessage *)pMsg->content)->fileSize;
-        strcpy(pFMsg->pFilePath, ((CFileMessage *)pMsg->content)->pFilePath);
-        strcpy(pFMsg->pFileName, ((CFileMessage *)pMsg->content)->pFileName);
-        printf("%.2f%%已传输\n", ((float)pFMsg->curLocal)/((float)pFMsg->fileSize/BUFFSIZE)*100);
-        pFMsg->curLocal++;
+        s_tfMsg->m_curLocal = ((CFileMessage *)pMsg->content)->m_curLocal;
+        s_tfMsg->m_fileSize = ((CFileMessage *)pMsg->content)->m_fileSize;
+        strcpy(s_tfMsg->m_achFilePath, ((CFileMessage *)pMsg->content)->m_achFilePath);
+        strcpy(s_tfMsg->m_achFileName, ((CFileMessage *)pMsg->content)->m_achFileName);
+        printf("%.2f%%已传输\n", ((float)s_tfMsg->m_curLocal)/((float)s_tfMsg->m_fileSize/BUFFSIZE)*100);
+        s_tfMsg->m_curLocal++;
         
     }
     
-    if(fp)  //文件打开成功
-    {
-        
-        pFMsg->curBufSize = pFMsg->fileSize - (pFMsg->curLocal - 1)*BUFFSIZE;   //记录本次上传包的大小
-        if(BUFFSIZE*pFMsg->curLocal >= pFMsg->fileSize)         //最后一次上传
+    if (s_fp)  /* 文件打开成功 */
+    {   
+        /* 记录本次上传包的大小 */
+        s_tfMsg->m_curBufSize = s_tfMsg->m_fileSize - (s_tfMsg->m_curLocal - 1) * BUFFSIZE;   
+        if (BUFFSIZE * s_tfMsg->m_curLocal >= s_tfMsg->m_fileSize)         /* 最后一次上传 */
         {
-            if(fread(pFMsg->pBuf, pFMsg->curBufSize, 1, fp) <= 1)
+            if (fread(s_tfMsg->m_achBuf, s_tfMsg->m_curBufSize, 1, s_fp) <= 1)
             {
                 
-                OspPost(g_pConnectInfo->pMsg->srcid, EVENT_ACK_SENDFILE, pFMsg, sizeof(CFileMessage), g_pConnectInfo->pMsg->srcnode,\
+                OspPost(g_ptConnectInfo->m_pMsg->srcid, EV_ACK_SENDFILE,
+                    s_tfMsg, sizeof(CFileMessage),
+                    g_ptConnectInfo->m_pMsg->srcnode,
                     MAKEIID(GetAppID(), GetInsID()));
-                fclose(fp);
+                fclose(s_fp);
                 
             } 
         }
         else
         {
-            pFMsg->curBufSize = BUFFSIZE;
-            if(fread(pFMsg->pBuf, BUFFSIZE, 1, fp) <= 1)
+            s_tfMsg->m_curBufSize = BUFFSIZE;
+            if (fread(s_tfMsg->m_achBuf, BUFFSIZE, 1, s_fp) <= 1)
             {
               
-                OspPost(g_pConnectInfo->pMsg->srcid, EVENT_ACK_SENDFILE, pFMsg, sizeof(CFileMessage), g_pConnectInfo->pMsg->srcnode,\
+                OspPost(g_ptConnectInfo->m_pMsg->srcid, EV_ACK_SENDFILE,
+                    s_tfMsg, sizeof(CFileMessage),
+                    g_ptConnectInfo->m_pMsg->srcnode,
                     MAKEIID(GetAppID(), GetInsID()));
             }
-        }
-    
-    
+        }   
     }
-    
-
 }
 
-s8 *GetFileName(s8 pFilePath[])
+s8 *GetFileName(s8 pchFilePath[])
 {
-    s32 len = strlen(pFilePath);
-    s8 downFileName[MAXFILENAME];
-    s8 FileName[MAXFILENAME];
-    s32 fileLen = 0;
-    for(s32 i = len - 1; i >= 0; i--, fileLen++)
+    s32 nLen = strlen(pchFilePath);
+    s8 achDownFileName[MAXFILENAME];
+    s8 m_achFileName[MAXFILENAME];
+    s32 nFileLen = 0;
+    for (s32 i = nLen - 1; i >= 0; i--, nFileLen++)
     {
-        if(pFilePath[i] == '\\')
+        if (pchFilePath[i] == '\\')
         {
             break;
         }
-        downFileName[len - i - 1] = pFilePath[i];
+        achDownFileName[nLen - i - 1] = pchFilePath[i];
     }
     
-    for(s32 i = 0; i < fileLen; i++)
+    for (s32 i = 0; i < nFileLen; i++)
     {
-        FileName[i] = downFileName[fileLen - i - 1];
+        m_achFileName[i] = achDownFileName[nFileLen - i - 1];
     }
-    FileName[fileLen] = '\0';
-    return FileName;
+    m_achFileName[nFileLen] = '\0';
+    return m_achFileName;
 }

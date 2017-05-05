@@ -1,115 +1,140 @@
-#include "rcvFile.h"
-
-#ifdef _MSC_VER
+#include "srvInstance.h"
 #include "io.h"
 #include "direct.h"
-#endif
 
-#ifdef _LINUX_
-#include 
-#endif
-void CServerInstance::rcvFile(CMessage *const pMsg)
+/* 本地文件指针 */
+static FILE *fp = NULL;
+
+/* 记录上传进度文件指针 */
+static FILE *fpRcd = NULL;
+
+/* 本地文件路径 */
+static s8 s_achFilePath[MAXFILENAME];
+
+/* 进度文件路径 */
+static s8 s_achRcdFilePath[MAXFILENAME];
+
+/* 记录文件信息 */
+static PTCFileMessage s_tfMsg = NULL;
+
+/* 创建本地文件与进度保存文件 */
+static void CreateUserFile(s8 [], s8 []);
+
+void CServerInstance::RcvFile(CMessage *const pMsg)
 {
 
-    if(!fp)     //第一次接收
+    if (!fp)     /* 第一次接收 */
     {
-        if(1 == ((CFileMessage *)pMsg->content)->curLocal)  //第一次正常接收，记录文件信息
+        /* 第一次正常接收，记录文件信息 */
+        if (1 == ((PTCFileMessage)pMsg->content)->m_curLocal)  
         {
-            pFMsg = (CFileMessage *)malloc(sizeof(CFileMessage));
-            pFMsg->fileSize = ((CFileMessage *)pMsg->content)->fileSize;
-            strcpy(pFMsg->pFilePath, ((CFileMessage *)pMsg->content)->pFilePath);
-            strcpy(pFMsg->pFileName, ((CFileMessage *)pMsg->content)->pFileName);
+            s_tfMsg = (PTCFileMessage)malloc(sizeof(CFileMessage));
+            s_tfMsg->m_fileSize = ((PTCFileMessage)pMsg->content)->m_fileSize;
+            strcpy(s_tfMsg->m_achFilePath,
+                ((PTCFileMessage)pMsg->content)->m_achFilePath);
+            strcpy(s_tfMsg->m_achFileName,
+                ((PTCFileMessage)pMsg->content)->m_achFileName);
 
-            m_Rcd.fMsg.fileSize = pFMsg->fileSize;//记录上传文件的客户机
-            strcpy(m_Rcd.fMsg.pFileName, ((CFileMessage *)pMsg->content)->pFileName);
-            strcpy(m_Rcd.fMsg.pFilePath, pFMsg->pFilePath);
+            /* 记录上传文件的客户端信息 */
+            m_tRcd.m_tfMsg.m_fileSize = s_tfMsg->m_fileSize;
+            strcpy(m_tRcd.m_tfMsg.m_achFileName,
+                ((PTCFileMessage)pMsg->content)->m_achFileName);
+            strcpy(m_tRcd.m_tfMsg.m_achFilePath, s_tfMsg->m_achFilePath);
 
-            strcpy(pFilePath, "C:\\Users\\Reisen\\Desktop\\test\\");
-            strcpy(pRcdFilePath, "C:\\Users\\Reisen\\Desktop\\test\\");
+            strcpy(s_achFilePath, ".\\test\\");
+            strcpy(s_achRcdFilePath, ".\\test\\");
 
-            strcat(pFilePath, m_pCurUser.pByAlias);
-            strcat(pRcdFilePath, m_pCurUser.pByAlias);
-            strcpy(m_Rcd.pUsername, m_pCurUser.pByAlias);
+            strcat(s_achFilePath, m_ptCurUser.m_achAlias);
+            strcat(s_achRcdFilePath, m_ptCurUser.m_achAlias);
+            strcpy(m_tRcd.m_achUsername, m_ptCurUser.m_achAlias);
         
-            m_Rcd.bFinish = false;  //记录状态未完成上传
+            m_tRcd.m_bFinish = false;  /* 记录状态未完成上传 */
 
-            createUserFile(pFilePath, pRcdFilePath);
-            strcat(pFilePath, "\\");
-            strcat(pFilePath, ((CFileMessage*)pMsg->content)->pFileName);
-            printf("%s\n", pFilePath);
+            CreateUserFile(s_achFilePath, s_achRcdFilePath);
+            strcat(s_achFilePath, "\\");
+            strcat(s_achFilePath, ((PTCFileMessage)pMsg->content)->m_achFileName);
+            printf("%s\n", s_achFilePath);
 
-            
-
-            fp = fopen(pFilePath, "wb");
-            fpRcd = fopen(strcat(pRcdFilePath, "\\rcdInfo"), "wb");
+            fp = fopen(s_achFilePath, "wb");
+            fpRcd = fopen(strcat(s_achRcdFilePath, "\\rcdInfo"), "wb");
             fclose(fpRcd);
         }
-        else                //第一次重连接收
+        else                /* 第一次重连接收 */
         {
-            pFMsg = (CFileMessage *)malloc(sizeof(CFileMessage));
-            pFMsg->fileSize = ((CFileMessage *)pMsg->content)->fileSize;
-            strcpy(pFMsg->pFilePath, ((CFileMessage *)pMsg->content)->pFilePath);
-            strcpy(pFMsg->pFileName, ((CFileMessage *)pMsg->content)->pFileName);
+            s_tfMsg = (PTCFileMessage)malloc(sizeof(CFileMessage));
+            s_tfMsg->m_fileSize = ((PTCFileMessage)pMsg->content)->m_fileSize;
+            strcpy(s_tfMsg->m_achFilePath,
+                ((PTCFileMessage)pMsg->content)->m_achFilePath);
+            strcpy(s_tfMsg->m_achFileName,
+                ((PTCFileMessage)pMsg->content)->m_achFileName);
        
-            strcpy(pFilePath, "C:\\Users\\Reisen\\Desktop\\test\\");
-            strcpy(pRcdFilePath, "C:\\Users\\Reisen\\Desktop\\test\\");
+            strcpy(s_achFilePath, ".\\test\\");
+            strcpy(s_achRcdFilePath, ".\\test\\");
 
-            strcat(pFilePath, m_pCurUser.pByAlias);
-            strcat(pRcdFilePath, m_pCurUser.pByAlias);
-            strcpy(m_Rcd.pUsername, m_pCurUser.pByAlias);
+            strcat(s_achFilePath, m_ptCurUser.m_achAlias);
+            strcat(s_achRcdFilePath, m_ptCurUser.m_achAlias);
+            strcpy(m_tRcd.m_achUsername, m_ptCurUser.m_achAlias);
         
-            m_Rcd.bFinish = false;  //记录状态未完成上传
+            m_tRcd.m_bFinish = false;  /* 记录状态未完成上传 */
 
-            createUserFile(pFilePath, pRcdFilePath);
-            strcat(pFilePath, "\\");
-            strcat(pFilePath, ((CFileMessage*)pMsg->content)->pFileName);
-            printf("%s\n", pFilePath);
+            CreateUserFile(s_achFilePath, s_achRcdFilePath);
+            strcat(s_achFilePath, "\\");
+            strcat(s_achFilePath, ((PTCFileMessage)pMsg->content)->m_achFileName);
+            printf("%s\n", s_achFilePath);
 
-            strcpy(m_Rcd.fMsg.pFilePath, pFilePath);//记录上传文件的客户机路径
+            strcpy(m_tRcd.m_tfMsg.m_achFilePath, s_achFilePath);/* 记录上传文件的客户机路径 */
 
-            fp = fopen(pFilePath, "wb");
-            fseek(fp, BUFFSIZE*((CFileMessage *)pMsg->content)->curLocal, SEEK_SET);
-            fpRcd = fopen(strcat(pRcdFilePath, "\\rcdInfo"), "wb");
-            fclose(fpRcd);
-
-            
+            fp = fopen(s_achFilePath, "wb");
+            fseek(fp, BUFFSIZE*((PTCFileMessage)pMsg->content)->m_curLocal, SEEK_SET);
+            fpRcd = fopen(strcat(s_achRcdFilePath, "\\rcdInfo"), "wb");
+            fclose(fpRcd);       
         }
     }
-    
-    
-    pFMsg->curLocal = ((CFileMessage *)pMsg->content)->curLocal;
-    pFMsg->curBufSize = ((CFileMessage *)pMsg->content)->curBufSize;
+      
+    s_tfMsg->m_curLocal = ((PTCFileMessage)pMsg->content)->m_curLocal;
+    s_tfMsg->m_curBufSize = ((PTCFileMessage)pMsg->content)->m_curBufSize;
 
-    if(!fp)
+    if (!fp)
     {
         printf("新建文件出错\n");
     }
-    if(fwrite(((CFileMessage*)pMsg->content)->pBuf, pFMsg->curBufSize, 1, fp) <= 1)
+    else
     {
-
-        if(BUFFSIZE*pFMsg->curLocal >= pFMsg->fileSize)
+        s32 nRtn = fwrite(((PTCFileMessage)pMsg->content)->m_achBuf, s_tfMsg->m_curBufSize, 1, fp);
+        if (nRtn <= 1)
         {
-            printf("100%%写入成功\n");
-            fclose(fp);
-            OspPost(pMsg->srcid, EVENT_TERM_SENDFILE, pFMsg, sizeof(CFileMessage), pMsg->srcnode, pMsg->dstid);
-            OspPost(MAKEIID(GetAppID(), GetInsID()), EVENT_TERM_SENDFILE, NULL, 0, 0);
+            /* 接收最后一包 */
+            if (BUFFSIZE * s_tfMsg->m_curLocal >= s_tfMsg->m_fileSize)
+            {
+                printf("100%%写入成功\n");
+                fclose(fp);
+                OspPost(pMsg->srcid, EV_TERM_SENDFILE, s_tfMsg,
+                    sizeof(CFileMessage), pMsg->srcnode, pMsg->dstid);
+                OspPost(MAKEIID(GetAppID(), GetInsID()), EV_TERM_SENDFILE,
+                    NULL, 0, 0);
+            }
+            else
+            {
+                printf("%.2f%%写入成功\n",
+                    ((float)s_tfMsg->m_curLocal)/((float)s_tfMsg->m_fileSize/BUFFSIZE)*100);
+                OspPost(pMsg->srcid, EV_ACK_SENDFILE, s_tfMsg,
+                    sizeof(CFileMessage), pMsg->srcnode, pMsg->dstid);
+            }
+
+            m_tRcd.m_nAldRcdSeek = s_tfMsg->m_curLocal;   /* 记录成功传送的文件偏移量 */
         }
         else
         {
-            printf("%.2f%%写入成功\n", ((float)pFMsg->curLocal)/((float)pFMsg->fileSize/BUFFSIZE)*100);
-            OspPost(pMsg->srcid, EVENT_ACK_SENDFILE, pFMsg, sizeof(CFileMessage), pMsg->srcnode, pMsg->dstid);
+            printf("接收文件出错\n");
         }
-
-        m_Rcd.dwAldRcdSeek = pFMsg->curLocal;   //记录成功传送的文件偏移量
-    
     }
-    
 }
 
-void CServerInstance::saveDisConnectInfo()
+void CServerInstance::SaveDisConnectInfo(void)
 {
-    fpRcd = fopen(pRcdFilePath, "wb");
-    if(fwrite(&m_Rcd, sizeof(m_Rcd), 1, fpRcd) <= 1)
+    fpRcd = fopen(s_achRcdFilePath, "wb");
+    s32 nRtn = fwrite(&m_tRcd, sizeof(m_tRcd), 1, fpRcd);
+    if (nRtn <= 1)
     {
         printf("记录断链信息成功\n");
     }
@@ -123,11 +148,11 @@ void CServerInstance::saveDisConnectInfo()
     
 
 
-void createUserFile(s8 filePath[], s8 pRcdFilePath[])
+void CreateUserFile(s8 filePath[], s8 pRcdFilePath[])
 {
 
     FILE *tfp = fopen(filePath, "rb");
-    if(!tfp)
+    if (!tfp)
     {
         mkdir(filePath);
         mkdir(strcat(pRcdFilePath, "\\Rcd"));
@@ -136,5 +161,4 @@ void createUserFile(s8 filePath[], s8 pRcdFilePath[])
     {
         fclose(tfp);
     }
-
 }
