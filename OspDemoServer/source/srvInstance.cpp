@@ -8,8 +8,8 @@ CServerInstance::CServerInstance()
 
 void CServerInstance::DaemonInstanceEntry(CMessage *const  pMsg, CApp * pApp)
 {
-    PTCSUserInfo ptSUer = new CSUserInfo;
-    ptSUer->m_pMsg = new CMessage;
+    PTSUserInfo ptSUer = (PTSUserInfo)malloc(sizeof(TSUserInfo));
+    ptSUer->m_pMsg = (CMessage *)malloc(sizeof(CMessage));
     u16 wCurEvent = pMsg->event;
     u16 wFlag = 0;              /* 该用户是否是重连用户 */
     if (EV_REQ_INSCONNECT == pMsg->event)
@@ -28,13 +28,13 @@ void CServerInstance::DaemonInstanceEntry(CMessage *const  pMsg, CApp * pApp)
         }
         if (wFlag)
         {
-            //OspPost(MAKEIID(GetAppID(), m_nCurInsNum + 1), EV_REQ_INSCONNECT, pMsg, sizeof(CMessage), 0);
+            /* OspPost(MAKEIID(GetAppID(), m_nCurInsNum + 1), EV_REQ_INSCONNECT, pMsg, sizeof(CMessage), 0); */
         }
         else
         {
             if (m_nCurInsNum <= MAXINS) /* 记录连接的用户信息 */
             {
-                m_ptUserInfo[m_nCurInsNum].pMsg = new CMessage();
+                m_ptUserInfo[m_nCurInsNum].pMsg = (CMessage *)malloc(sizeof(CMessage));
                 memcpy(m_ptUserInfo[m_nCurInsNum].pMsg, pMsg, sizeof(CMessage));
                 m_ptUserInfo[m_nCurInsNum].m_nNumber = m_nCurInsNum + 1;
                 m_ptUserInfo[m_nCurInsNum].m_nState = 1;
@@ -67,14 +67,14 @@ void CServerInstance::DaemonInstanceEntry(CMessage *const  pMsg, CApp * pApp)
     {
         
         /* 转发给客户消息 */
-        OspPost(m_ptUserInfo[((PTCTransInfoBuffer)pMsg->content)->m_nUserNum - 1].pMsg->srcid,
+        OspPost(m_ptUserInfo[((PTTransInfoBuffer)pMsg->content)->m_nUserNum - 1].pMsg->srcid,
             EV_REQ_TRANSINFO,
-            ((PTCTransInfoBuffer)pMsg->content),
-            sizeof(CTransInfoBuffer),
-            m_ptUserInfo[((PTCTransInfoBuffer)pMsg->content)->m_nUserNum - 1].pMsg->srcnode,
+            ((PTTransInfoBuffer)pMsg->content),
+            sizeof(TTransInfoBuffer),
+            m_ptUserInfo[((PTTransInfoBuffer)pMsg->content)->m_nUserNum - 1].pMsg->srcnode,
             MAKEIID(GetAppID(), GetInsID()));
        /* 告知实例，一次业务结束 */
-        OspPost(MAKEIID(GetAppID() , ((PTCTransInfoBuffer)pMsg->content)->m_nCurIns),
+        OspPost(MAKEIID(GetAppID() , ((PTTransInfoBuffer)pMsg->content)->m_nCurIns),
             EV_TERM_TRANSINFO, NULL, 0, 0, MAKEIID(GetAppID(), GetInsID()));
     }
     else if (OSP_DISCONNECT == wCurEvent)

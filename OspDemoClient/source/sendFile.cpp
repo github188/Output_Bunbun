@@ -3,7 +3,7 @@
 static s8 SENDBUFF[BUFFSIZE];
 static s8 *GetFileName(s8 []);
 static FILE *s_fp = NULL;
-static CFileMessage *s_tfMsg = NULL;
+static PTFileMessage s_tfMsg = NULL;
 
 
 void CClientInstance::SendFile(CMessage *const pMsg)
@@ -12,7 +12,7 @@ void CClientInstance::SendFile(CMessage *const pMsg)
     s8 m_achFilePath[MAXFILENAME];
     if (!s_fp)                    /* 第一次上传交互，初始文件信息 */
     {
-        s_tfMsg = (CFileMessage *)malloc(sizeof(CFileMessage));
+        s_tfMsg = (PTFileMessage)malloc(sizeof(TFileMessage));
         if (!(pMsg->content))        /* 第一次正常上传 */
         {
             printf("请输入需要传送的文件的路径:\n");
@@ -37,10 +37,10 @@ void CClientInstance::SendFile(CMessage *const pMsg)
         else                /* 第一次续传 */
         {
             printf("第一次续传\n");
-            s_tfMsg->m_curLocal = ((CRcdInfo *)pMsg->content)->m_nAldRcdSeek;
-            strcpy(s_tfMsg->m_achFilePath, ((CRcdInfo *)pMsg->content)->m_tfMsg.m_achFilePath);
-            strcpy(s_tfMsg->m_achFileName, ((CRcdInfo *)pMsg->content)->m_tfMsg.m_achFileName);
-            s_tfMsg->m_fileSize = ((CRcdInfo *)pMsg->content)->m_tfMsg.m_fileSize;
+            s_tfMsg->m_curLocal = ((PTRcdInfo)pMsg->content)->m_nAldRcdSeek;
+            strcpy(s_tfMsg->m_achFilePath, ((PTRcdInfo)pMsg->content)->m_tfMsg.m_achFilePath);
+            strcpy(s_tfMsg->m_achFileName, ((PTRcdInfo)pMsg->content)->m_tfMsg.m_achFileName);
+            s_tfMsg->m_fileSize = ((PTRcdInfo)pMsg->content)->m_tfMsg.m_fileSize;
             printf("m_fileSize = %d\n", s_tfMsg->m_fileSize);
             s_fp = fopen(s_tfMsg->m_achFilePath, "rb");
             fseek(s_fp, BUFFSIZE*s_tfMsg->m_curLocal, SEEK_SET);
@@ -51,10 +51,10 @@ void CClientInstance::SendFile(CMessage *const pMsg)
     else    /* 打印上传文件的进度 */
     {
 
-        s_tfMsg->m_curLocal = ((CFileMessage *)pMsg->content)->m_curLocal;
-        s_tfMsg->m_fileSize = ((CFileMessage *)pMsg->content)->m_fileSize;
-        strcpy(s_tfMsg->m_achFilePath, ((CFileMessage *)pMsg->content)->m_achFilePath);
-        strcpy(s_tfMsg->m_achFileName, ((CFileMessage *)pMsg->content)->m_achFileName);
+        s_tfMsg->m_curLocal = ((PTFileMessage)pMsg->content)->m_curLocal;
+        s_tfMsg->m_fileSize = ((PTFileMessage)pMsg->content)->m_fileSize;
+        strcpy(s_tfMsg->m_achFilePath, ((PTFileMessage)pMsg->content)->m_achFilePath);
+        strcpy(s_tfMsg->m_achFileName, ((PTFileMessage)pMsg->content)->m_achFileName);
         printf("%.2f%%已传输\n", ((float)s_tfMsg->m_curLocal)/((float)s_tfMsg->m_fileSize/BUFFSIZE)*100);
         s_tfMsg->m_curLocal++;
         
@@ -70,7 +70,7 @@ void CClientInstance::SendFile(CMessage *const pMsg)
             {
                 
                 OspPost(g_ptConnectInfo->m_pMsg->srcid, EV_ACK_SENDFILE,
-                    s_tfMsg, sizeof(CFileMessage),
+                    s_tfMsg, sizeof(TFileMessage),
                     g_ptConnectInfo->m_pMsg->srcnode,
                     MAKEIID(GetAppID(), GetInsID()));
                 fclose(s_fp);
@@ -84,7 +84,7 @@ void CClientInstance::SendFile(CMessage *const pMsg)
             {
               
                 OspPost(g_ptConnectInfo->m_pMsg->srcid, EV_ACK_SENDFILE,
-                    s_tfMsg, sizeof(CFileMessage),
+                    s_tfMsg, sizeof(TFileMessage),
                     g_ptConnectInfo->m_pMsg->srcnode,
                     MAKEIID(GetAppID(), GetInsID()));
             }

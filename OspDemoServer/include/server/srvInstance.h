@@ -29,7 +29,7 @@ public:
     TUserInfo m_ptUserInfo[MAXINS];   /* DaemonIns保存在线的客户信息 */
     TUserInfo m_ptCurUser;            /* 普通Ins存放当前相连的用户信息 */
     s32 m_nCurInsNum;                 /* DaemonIns存放当前已连接的用户数 */
-    TCRcdInfo m_tRcd;                 /* 存放文件交互信息 */
+    TRcdInfo m_tRcd;                 /* 存放文件交互信息 */
 private:
     void DaemonInstanceEntry( CMessage *const pMsg, CApp *pApp);
     void InstanceEntry(CMessage *const pMsg);

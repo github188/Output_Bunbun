@@ -1,6 +1,5 @@
 #include "cltInstance.h"
 
-/*******************************************************************************/
 
 static void printE(u16 wEvent)
 {
@@ -76,8 +75,8 @@ void CClientInstance::IdleFunction(CMessage *const pMsg)
             /* 向服务器Daemon请求分配实例 */
             s32 rtn = -1;
             rtn = OspPost(MAKEIID(SRV_APP_NO, CClientInstance::DAEMON),
-                EV_REQ_INSCONNECT, ((PTCUserInfo)pMsg->content)->m_achUsername, 
-                sizeof(((PTCUserInfo)pMsg->content)->m_achUsername),
+                EV_REQ_INSCONNECT, ((PTClientUserInfo)pMsg->content)->m_achUsername, 
+                sizeof(((PTClientUserInfo)pMsg->content)->m_achUsername),
                 g_ptConnectInfo->m_nDstnode, MAKEIID(CLT_APP_NO, 1));
             if (!rtn)
             {       
@@ -129,7 +128,7 @@ void CClientInstance::IdleAckInsConnect(CMessage *const pMsg)
         g_ptConnectInfo->m_pMsg->srcid = pMsg->srcid;
         g_ptConnectInfo->m_pMsg->srcnode = pMsg->srcnode;
 
-        if (!(((PTCRcdInfo)pMsg->content)->m_bFinish)) /* 上次传送未完成 */
+        if (!(((PTRcdInfo)pMsg->content)->m_bFinish)) /* 上次传送未完成 */
         {
             printf("是否续传上次的文件(y/n)?\n");
             bool bCmd;
@@ -157,7 +156,7 @@ void CClientInstance::IdleAckInsConnect(CMessage *const pMsg)
                 printf("进入工作状态\n");
                 NextState(C_STATE_WORK);
                 OspPost(MAKEIID(GetAppID(), GetInsID()), EV_ACK_SENDFILE,
-                    pMsg->content, sizeof(CRcdInfo), 0, 0);
+                    pMsg->content, sizeof(TRcdInfo), 0, 0);
             }
             else
             {
@@ -198,8 +197,8 @@ void CClientInstance::ConnectFunction(CMessage *const pMsg)
             case EV_REQ_TRANSINFO:
             {
                 printf("有来自%s的新消息 : %s\n",
-                    ((PTCTransInfoBuffer)pMsg->content)->m_achUserName,
-                    ((PTCTransInfoBuffer)pMsg->content)->m_achContent);
+                    ((PTTransInfoBuffer)pMsg->content)->m_achUserName,
+                    ((PTTransInfoBuffer)pMsg->content)->m_achContent);
             }
                 break;
             default:
@@ -329,7 +328,7 @@ void CClientInstance::WorkFunction(CMessage *const pMsg)
 
 void CClientInstance::WorkTermTransInfo(CMessage *const pMsg)
 {
-    PTCTransInfoBuffer buffer = new CTransInfoBuffer;
+    PTTransInfoBuffer buffer = new TTransInfoBuffer;
     s8 pchInfo[BUFFSIZE];
     printf("请输入你要发送的消息:\n");
     scanf("%s", pchInfo);
@@ -342,7 +341,7 @@ void CClientInstance::WorkTermTransInfo(CMessage *const pMsg)
     memcpy(buffer->m_achUserName, g_ptCltUserInfo->m_achUsername,
         strlen(g_ptCltUserInfo->m_achUsername) + 1);
     OspPost(pMsg->srcid, EV_ACK_TRANSINFO, buffer,
-        sizeof(CTransInfoBuffer), pMsg->srcnode, pMsg->dstid);
+        sizeof(TTransInfoBuffer), pMsg->srcnode, pMsg->dstid);
     NextState(C_STATE_TERM);
     OspPost(MAKEIID(GetAppID(), GetInsID()), 1024, NULL, 0, 0);
 }

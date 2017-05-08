@@ -6,7 +6,7 @@
 /*
     与服务器连接信息的保存
 */
-typedef struct ConnectInfo
+typedef struct tagConnectInfo
 {
     /* 目的节点 */
     s32 m_nDstnode;
@@ -18,7 +18,7 @@ typedef struct ConnectInfo
 extern PTConnectInfo g_ptConnectInfo;
 
 /* 自用户信息保存 */
-extern CUserInfo *g_ptCltUserInfo;
+extern PTClientUserInfo g_ptCltUserInfo;
 
 /* ==================================================================== 
 函数名 ：UserInterface

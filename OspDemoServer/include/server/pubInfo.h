@@ -89,10 +89,10 @@
 #define EV_TIMEOUT_DISCONNECT       (u16)(EV_T*7 + EV_TIMEOUT)
 
 /* ====================================================================
-结构体名：UserInfo
+结构体名：tagUserInfo
 功能：服务器存储连接客户信息
 ==================================================================== */
-typedef struct UserInfo
+typedef struct tagUserInfo
 {
     CMessage *pMsg;     /* 与客户连接的CMessgae信息 */
     s8 m_achAlias[20];  /* 客户别名 */
@@ -102,16 +102,16 @@ typedef struct UserInfo
 }TUserInfo, *PTUserInfo;
 
 /* ====================================================================
-结构体名：CTransInfoBuffer
+结构体名：tagTransInfoBuffer
 功能：转发信息客户信息暂存
 ==================================================================== */
-typedef struct CTransInfoBuffer
+typedef struct tagTransInfoBuffer
 {
     s8 m_achUserName[MAXUSERNAME];       /* 用户名 */
     s8 m_achContent[BUFFSIZE];           /* 转发内容 */
     s32 m_nUserNum;                     /* 目的用户序号 */
     s32 m_nCurIns;                      /* 与当前用户连接的实例号 */
-}TCTransInfoBuffer, *PTCTransInfoBuffer;
+}TTransInfoBuffer, *PTTransInfoBuffer;
 
 /* ====================================================================
     Osp应用程序之间需要遵循的规则:
@@ -158,10 +158,10 @@ typedef struct CTransInfoBuffer
 #define C_STATE_TERM        (u16)(4)    /* 终止状态 */
 
 /* ====================================================================
-结构体名：CFileMessage
+结构体名：tagFileMessage
 功能：客户端及服务端交互文件时候所使用的文件的包
 ==================================================================== */
-typedef struct CFileMessage
+typedef struct tagFileMessage
 {
     s8 m_achFileName[MAXFILENAME];          /* 文件名 */
     s8 m_achFilePath[MAXFILENAME];          /* 文件路径 */
@@ -169,41 +169,41 @@ typedef struct CFileMessage
     s64 m_fileSize;                         /* 文件大小 */
     s64 m_curLocal;                         /* 当前定位 */
     s64 m_curBufSize;                       /* 当前包包含有用信息的大小 */
-}TCFileMessage, *PTCFileMessage;
+}TFileMessage, *PTFileMessage;
 
 /* ====================================================================
-结构体名：CRcdInfo
+结构体名：tagRcdInfo
 功能：客户端和服务器存放文件交互信息
 ==================================================================== */
-typedef struct CRcdInfo
+typedef struct tagRcdInfo
 {
     s32 m_nAldRcdSeek;                   /* 已正确上传的文件内容 */
     s8 m_achMD5[MD5SIZE];                /* 文件MD5码值 */
     s8 m_achUsername[MAXUSERNAME];       /* 客户端用户名 */
-    CFileMessage m_tfMsg;                /* 文件信息 */
+    TFileMessage m_tfMsg;                /* 文件信息 */
     bool m_bFinish;                      /* 是否上传完毕 */
-}TCRcdInfo, *PTCRcdInfo;
+}TRcdInfo, *PTRcdInfo;
 
 /* ====================================================================
-结构体名：CUserInfo
+结构体名：tagUserInfo
 功能：客户端向服务器提供的个人信息包
 ==================================================================== */
 #define ONLINE      (u16)(1)
 #define OFFLINE     (u16)(0)
-typedef struct  CUserInfo
+typedef struct tagClientUserInfo
 {
     s8 m_achUsername[MAXUSERNAME];        /* 客户端用户名 */
     CMessage m_CMsg;                      /* 连接信息 */
-}TCUserInfo, *PTCUserInfo;
+}TClientUserInfo, *PTClientUserInfo;
 
 /* ====================================================================
-结构体名：CSUserInfo
+结构体名：tagSUserInfo
 功能：服务器内部注册用户信息的包
 ==================================================================== */
-typedef struct CSUserInfo
+typedef struct tagSUserInfo
 {
     CMessage *m_pMsg;         /* 连接信息 */
     u16 m_wFlag;              /* 是否为重连用户 */
-}TCSUserInfo, *PTCSUserInfo;
+}TSUserInfo, *PTSUserInfo;
 
 #endif /* pubInfo.h */

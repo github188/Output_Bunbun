@@ -2,8 +2,8 @@
 
 class CClientApp : public zTemplate <CClientInstance, 1, CAppNoData, 0>{};
 
-extern ConnectInfo *g_ptConnectInfo = NULL;            /* 连接信息 */
-extern CUserInfo *g_ptCltUserInfo = NULL;              /* 客户端信息 */
+extern PTConnectInfo g_ptConnectInfo = NULL;            /* 连接信息 */
+extern PTClientUserInfo g_ptCltUserInfo = NULL;              /* 客户端信息 */
 
 extern void UserInterface(void)
 {
@@ -79,9 +79,9 @@ int main(int argc, char *argv[])
                         CLT_APP_STK_SIZE);
 
     /* 初始化连接信息 */
-    g_ptConnectInfo = (PTConnectInfo)malloc(sizeof(ConnectInfo));
+    g_ptConnectInfo = (PTConnectInfo)malloc(sizeof(TConnectInfo));
     g_ptConnectInfo->m_pMsg = (CMessage *)malloc(sizeof(CMessage));
-    g_ptCltUserInfo = (PTCUserInfo)malloc(sizeof(CUserInfo));
+    g_ptCltUserInfo = (PTClientUserInfo)malloc(sizeof(TClientUserInfo));
     s8 achAddr[IPSTR_MAX];
     u16 wTcpPort;
     printf("输入你需要连接的服务器地址和端口(地址与端口间空格分隔):\n");
@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
             (OSP_OK == OspNodeDiscCBReg(g_ptConnectInfo->m_nDstnode, CLT_APP_NO, 1)
             ?"成功":"失败"));
         nRtn = OspPost(MAKEIID(CLT_APP_NO, 1), EV_REQ_INSCONNECT,
-            g_ptCltUserInfo, sizeof(CUserInfo), 0);
+            g_ptCltUserInfo, sizeof(TUserInfo), 0);
     }
     else
     {
